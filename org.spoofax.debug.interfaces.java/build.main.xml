@@ -18,8 +18,6 @@
         	
     <target name="compile" depends="build-debug.interfaces">
         <mkdir dir="${classes.dir}"/>
-    	<echo message="SOURCE: ${src.dir}"/>
-    	<echo message="LIB: ${lib.dir}"/>
         <javac srcdir="${src.dir}" destdir="${classes.dir}" source="1.5" target="1.5" debug="on">
         	<classpath refid="my_classpath" />
         </javac>
