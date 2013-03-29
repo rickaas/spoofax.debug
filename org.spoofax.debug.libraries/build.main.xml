@@ -12,7 +12,6 @@
 	<property file="project.properties" description="Project configuration properties"/>
 	<property file="build-defaults.properties" description="default build configuration."/>
 	
-	<!-- WebDSL tryfinally compiler -->
 	<loadproperties srcFile="config.properties" />
 	
 	<property name="lib.dsldi.dir" location="lib/libdsldi" />
