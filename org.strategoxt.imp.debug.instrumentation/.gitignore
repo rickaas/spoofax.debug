@@ -2,3 +2,6 @@
 /dist
 /working
 /utils
+*.generated.esv
+/editor/java/trans
+/editor/java/org/strategoxt/imp/debug/instrumentation/trans
