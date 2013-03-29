@@ -1,0 +1,48 @@
+module file-io
+
+language DSLDI
+
+test sel definition operators [[
+    
+instrumentation
+
+
+]] run write-to-string to "SEL(InstrBlock([]))"
+
+test write to string 1
+!Enter()
+; write-to-string => "Enter"
+  
+test write to string 2
+!Enter("foo","bar")
+; write-to-string => "Enter(\"foo\",\"bar\")"
+  
+  
+test read from string 1
+!"Enter()"
+; read-from-string => Enter
+  
+test read from string 2
+!"Enter(foo,bar)"
+; read-from-string => Enter(foo,bar)
+  
+test ReadFromFile 1
+!"test/aterms/strategydef.aterm"
+; ReadFromFile
+  
+  test ReadFromFile 2
+!"test/aterms/strategydef.aterm"
+; ReadFromFile
+//; pp-aterm
+  
+test direcory name 1
+  !"foo/bar.a"
+  ; dirname => "foo"
+    
+test direcory name 2
+  !"foo/bar.a/"
+  ; dirname => "foo"
+    
+test direcory name 3
+  !"foo/"
+  ; dirname => "."

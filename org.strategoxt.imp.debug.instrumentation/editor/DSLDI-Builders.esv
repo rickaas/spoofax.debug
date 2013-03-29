@@ -1,0 +1,34 @@
+
+module DSLDI-Builders
+
+imports DSLDI-Builders.generated
+
+builders
+
+  // This file can be used for custom analysis and builder rules.
+  //
+  // See the imported file for a brief introduction and examples.
+
+builders
+
+  provider : include/dsldi.jar
+  provider : include/dsldi-java.jar
+  provider : include/libdsldi.jar
+
+  observer : editor-analyze // TODO: implement Sort and Constructor analysis of sel definition
+
+//  builder  : "Generate Java code (for selection)"   = generate-java (openeditor) (realtime)
+  builder  : "Show abstract syntax (for selection)" = generate-aterm (openeditor) (realtime) //(meta) (source)  
+//  builder  : "Project path" = main-test (openeditor) (realtime) //(meta) (source)
+
+// operate on sel definitions
+  builder : "Show extract transformations" = show-extract-transformations (meta) (openeditor)
+  builder : "Show generate transformations" = show-generate-transformations (meta) (openeditor)
+
+refactorings
+
+//  pp-table                  : get-pp-table
+
+//  refactoring ID            : "Rename Entity" = rename-entity (source) (cursor)
+
+// on save: generate-java

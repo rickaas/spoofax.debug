@@ -1,0 +1,123 @@
+module libdsldi/sel/links
+
+imports
+	include/DSLDI
+//	lib/editor-common.generated
+
+imports
+	libdsldi/sel/instrument
+
+imports
+    libdsldi/sel/dynamic-call
+    
+strategies
+	
+	// current-term should be a tuple (term, syntax-pattern)
+	// term can be any stratego term
+	// syntax pattern can be one of the following structures
+	//	SortAndConstructor(Empty(), Constructor("Fail"))
+	//	SortAndConstructor(Sort("Strategy"), Constructor("Fail"))
+	//	SortAndConstructor(Sort("StrategyDef"),Empty())
+	external java-match-term-against-syntax-pattern(|)
+	
+	external java-copy-attachment(|source, destination)
+
+// TODO: move
+strategies
+	
+	// ignore the returned term, it is the input tuple. The destination-term has attachments from the source
+	copy-attachment = ?(source, destination) ;java-copy-attachment(|source, destination)
+	
+	// current term is the destination, argument is the source
+	// returned term is still the current term with the attachment set
+	copy-attachment-from(|source) = ?destination; !(source, destination); copy-attachment; !destination
+	
+	test-copy-attachment = ?(source, destination) //; <debug(!"COPY ATT")> ""
+	; java-copy-attachment(|source, destination)
+
+    // the attachments of the input term are copied to the output term.
+    keeps-attachments(s) = ?input-term
+        // RL: start debugging of copying of attachments
+        // ;     (
+        //       //debug(!"before get parent    ") ;
+        //         (prim("SSL_EXT_get_parent", input-term)
+        //          //; debug(!"after get parent      ")
+        //          ; ext-term-hashcode
+        //       ) 
+        //       <+ !"no-i-hash")
+        //       ; ?i-hash
+                
+        ; !input-term; s; ?output-term
+        // RL: start debugging of copying of attachments
+        // ; !(input-term, output-term); (copy-attachment<+ debug(!"Failed to copy attachments: "))
+        // ; !output-term 
+        // ;     (
+        //         (prim("SSL_EXT_get_parent", output-term)
+        //          ; ext-term-hashcode) 
+        //       <+ !"no-o-hash")
+        //       ; ?o-hash
+        // ; message := <concat-strings> ["hashes: ", i-hash, " ", o-hash]
+        // //; try(equal(|i-hash) <+ <debug> message)
+        // // return the output term  
+        ; !output-term
+
+imports
+  libstratego-lib
+  libstratego-sglr
+  libstratego-gpp
+rules
+// 	
+// 	read-dsldi-file = parse-dsldi-file
+    read-dsldi-file =
+	    parse-file(
+	      strsglr-perror, strsglr-report-parse-error
+	    | <import-term(include/DSLDI.tbl)>
+	    )
+rules
+	// current term is a Link, returns the event-type
+	// return-type: String
+	get-event-type :
+		Link(event-type, syntax-pattern, gen-transformation, extract-transformation) -> event-type
+	
+	// current term is a Link, returns the syntax-pattern
+	// return-type: String
+	get-syntax-pattern :
+		Link(event-type, syntax-pattern, gen-transformation, extract-transformation) -> syntax-pattern
+		
+	// current term is a Link, returns the gen-transformation (the name of the strategy to use in the event generation)
+	// return-type: String
+	get-gen-transformation :
+		Link(event-type, syntax-pattern, StrategyRef(gen-transformation), StrategyRef(extract-transformation)) -> gen-transformation
+	
+	// current term is a Link, returns the extract-transformation (the name of the strategy to use in the metadata-extraction)
+	// return-type: String
+	get-extract-transformation :
+		Link(event-type, syntax-pattern, StrategyRef(gen-transformation), StrategyRef(extract-transformation)) -> extract-transformation
+		
+	//get-sel-links = GET-SEL-DEFINITION ; ?SEL(InstrBlock(links)); !links
+	
+	// gets or sets the current sel defintion
+	// return-type: SEL
+	SET-SEL-DEFINITION = ?sel-definition // ?SEL(...)
+	; rules(
+		GET-SEL-DEFINITION: _ -> sel-definition
+	)
+	
+	// returns all syntax-event links as a list
+	// return-type: List<Link>
+	get-sel-links-as-list = ?SEL(InstrBlock(links)); !links
+	
+	// returns the Link at the index i
+	// current term should be SEL
+	// return-type: Link
+	get-sel-link-at-index(|i) = get-sel-links-as-list; index(|i)
+	
+	// current-term should be a term from a parsed DSL program.
+	// if the term matches the syntax pattern in link then this strategies succeeds, otherwise it fails
+	// returns the term
+	match-term-against-syntax-pattern(|link) =
+		?term
+		; syntax-pattern := <get-syntax-pattern> link
+		;!(term, syntax-pattern)
+		; java-match-term-against-syntax-pattern
+		; !term

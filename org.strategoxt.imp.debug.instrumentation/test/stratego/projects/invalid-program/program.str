@@ -1,0 +1,5 @@
+module program
+
+strategies
+	main =
+		debug(!"MAIN")

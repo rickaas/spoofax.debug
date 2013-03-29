@@ -1,0 +1,21 @@
+module localmod/syntax/varsyntax
+
+signature
+  sorts
+    Var Number Add Sub Print Assign Function Comment Program
+
+  constructors
+  	
+  	Var		: String -> Expression
+  	Number	: Int -> Expression
+  	Add		: Expression * Expression -> Expression
+  	Sub		: Expression * Expression -> Expression
+  	
+  	Print	: Expression -> Statement
+  	Assign	: String * Expression -> Statement
+  	
+  	Function : String * List(Statement) -> Definition
+  	
+  	Comment : String * String -> Definition
+  	
+  	Program : String * List(Definition) -> Program

@@ -1,0 +1,51 @@
+module test_stratego
+
+language DSLDI
+
+test contains stratego
+	!Module(
+		"tiny",
+		[Strategies(
+			[
+				SDefNoArgs(
+					"foo-strat",
+					Seq(
+					 	Match(Var("match")),
+					 	Call(SVar("debug"),
+					 		[Build(NoAnnoList(Str("\"foo: \"")))]
+					 	)
+					 )
+				),
+				SDefNoArgs(
+					"bar-strat",
+					Seq(
+						Match(Var("match")),
+						Call(SVar("debug"),
+							[Build(NoAnnoList(Str("\"foo: \"")))]
+						)
+					)
+				)
+			]
+		)
+		]
+	)
+	; ?a-term
+	; oncetd(?Call(a, b))
+	; !a-term; oncetd(?Call(c, d); SET-SAVED-ATERM)
+	; GET-SAVED-ATERM
+	; !a-term; oncetd(?SDefNoArgs(_, _); SET-SAVED-ATERM)
+	; GET-SAVED-ATERM
+	=> 
+	SDefNoArgs(
+		"foo-strat",
+		Seq(
+		 	Match(Var("match")),
+		 	Call(SVar("debug"),
+		 		[Build(NoAnnoList(Str("\"foo: \"")))]
+		 	)
+		 )
+	)
+/*
+test foobaz [[
+	faaa-s = id
+]]*/

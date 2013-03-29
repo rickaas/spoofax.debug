@@ -1,0 +1,126 @@
+module localvar
+
+imports
+  libstrategolib
+
+signature
+  sorts
+    Prop
+
+  constructors
+    Var      : String -> Expression
+    Number   : Int -> Expression
+    Add      : Expression * Expression -> Expression
+    Sub      : Expression * Expression -> Expression
+    Print    : Expression -> Statement
+    Assign   : String * Expression -> Statement
+    Function : String * List(Statement) -> Definition
+    Comment  : String * String -> Definition
+    Program  : String * List(Definition) -> Program
+
+
+strategies
+  main =
+    ENTER(
+    | "localvar.str"
+    , "main"
+    , "31"
+    , "2"
+    , "32"
+    , "19"
+    )
+    ; io-wrap(execute)
+
+
+rules
+
+  execute :
+    input -> output
+    with output := <match-comments> input
+
+
+rules
+
+  match-comments :
+    Program(_, definitions*) -> out
+    with f* := <find-functions> definitions*
+         ; c* := <find-comments> definitions*
+         ; out := <match-f-and-c> (f*, c*)
+
+  find-functions :
+    definition* -> functions*
+    with functions* := <filter(?Function(_, _))> definition*
+
+  find-comments :
+    definition* -> comments*
+    with comments* := <filter(?Comment(_, _))> definition*
+
+  match-f-and-c :
+    (f*, c*) -> matches*
+    with matches* := <map(try-find-comment-by-name(|c*))> f*
+
+  try-find-comment-by-name(|c*) =
+    find-comment-match(|c*)
+
+  find-comment-match(|c*):
+    f -> (f, c)
+    where name := <get-function-name> f
+          ; c := <find-comment-by-name(|name)> c*
+
+  get-function-name :
+    Function(name, _) -> name
+
+  find-comment-by-name(|name):
+    c* -> comment
+    with c-filtered* := <filter(?Comment(name, _))> c*
+         ; comment := ( <debug(!"stuff:") ; first> c-filtered*
+                      )
+
+  old-first :
+    c-list* -> out
+    where out := <last> c-list* <+ build-c
+
+  is-empty =
+    ENTER(
+    | "localvar.str"
+    , "is-empty"
+    , "92"
+    , "1"
+    , "92"
+    , "14"
+    )
+    ; ?[]
+
+  first =
+    ENTER(
+    | "localvar.str"
+    , "first"
+    , "95"
+    , "1"
+    , "97"
+    , "28"
+    )
+    ; debug(!"first: ")
+    ; (is-empty < build-c + last)
+
+  build-c =
+    ENTER(
+    | "localvar.str"
+    , "build-c"
+    , "99"
+    , "1"
+    , "99"
+    , "38"
+    )
+    ; !Comment("new", "created!!")
+      
+      
+// *********************************************
+strategies
+	ENTER(|filename, methodname, a, b, c, d) = ?p
+	
+	EXIT(|filename, methodname, a, b, c, d) = ?p
+	
+	STEP(|filename, methodname, a, b, c, d) = ?p
+	
+	VAR(|filename, methodname, a, b, c, d) = ?p

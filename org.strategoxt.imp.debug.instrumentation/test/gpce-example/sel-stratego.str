@@ -1,0 +1,49 @@
+module sel-stratego
+
+imports
+	libstrategolib
+	
+signature
+  constructors
+	FunctionDecl : ID * List(Statement) -> FunctionDecl
+	
+	Statement : ID -> FuncCall
+  	
+strategies
+	
+
+	
+	// ?FunctionDecl
+	gen-func-enter(|debug-info) = create-debug-call(|debug-info)
+	
+	// sort Statement
+	gen-stat-step = ?s
+	
+	// ?FunctionDecl
+	extract-function-debug-info : 
+		FunctionDecl(name, stats*){a} -> (filename, location-info)
+		with
+			location-info := <create-location-info> a
+			; filename := <FileName>
+	
+	// sort Statement
+	extract-statement-debug-info :
+		s{a} -> (filename, location-info)
+			with
+			location-info := <create-location-info> a
+			; filename := <FileName>
+
+	init-file:
+		(ast, path, project-path) -> instrumented-ast
+		with
+			rules(
+				FileName : x -> path
+			);
+			instrumented-ast := <instrument> ast
+	
+	instrument = topdown(id)
+	
+	create-debug-call(|debug-info) = fail
+		
+	create-location-info :
+		loc -> loc

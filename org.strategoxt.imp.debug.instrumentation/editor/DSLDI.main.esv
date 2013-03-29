@@ -1,0 +1,16 @@
+module DSLDI.main
+
+imports DSLDI-Builders DSLDI-Colorer DSLDI-Completions DSLDI-Folding DSLDI-Outliner DSLDI-References DSLDI-Syntax
+
+language General properties
+                  
+  name          : DSLDI
+  id            : org.strategoxt.imp.debug.instrumentation
+  extends       : Root
+                  
+  description   : "Spoofax/IMP-generated editor for the DSLDI language"
+  url           : http://strategoxt.org
+                  
+  extensions    : dsldi
+  table         : include/DSLDI.tbl
+  start symbols : SEL

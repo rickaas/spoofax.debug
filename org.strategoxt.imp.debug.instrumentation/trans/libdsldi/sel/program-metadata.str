@@ -1,0 +1,110 @@
+module libdsldi/sel/program-metadata
+
+/*
+The program-metadata contains dynamic rules which act as getters/setters.
+These are used to maintain a "state" while instrumenting a DSL source file with debug events.
+*/
+//imports
+//	lib/editor-common.generated
+	
+imports
+	libdsldi/utils
+	libdsldi/logging/logging
+	
+strategies
+	/*
+	* Current term is a tuple with the basepath and an extension-list
+	This strategy returns all file location that end with the given extension and are in a subdirectory of the basepath. 
+	*/
+	get-dsl-program-files =
+		?(dsl-program-basepath, extensions)
+		; log-vomit(|"get-dsl-program-files: ")
+		//;<debug(!"get-dsl-program-files ")> dsl-program-basepath
+		//;<debug(!"extension ")> extensions
+		; dsl-program-files := <walk-dir(keep-extensions-filter(|extensions) | dsl-program-basepath)> dsl-program-basepath // location should be relative to the DSL-PROGRAM-BASEPATH
+
+    get-term-origin-location-tuple = ?term;
+          (
+          // origin-location  = prim("SSL_EXT_origin_location", <id>)
+          // try to use the primitive
+          prim("SSL_EXT_origin_location", <id>)//; debug(!"PRIM"))
+          < id // success
+          + (
+              // fail
+                err-msg(|"Could not extract origin information")
+                ; <log-debug-depth(err(|"... at term:"))> term
+                ; <log-vomit(|"... more details:")> term
+                ; fail 
+              )
+          )
+        // try to parse the location info
+        //; debug(!"ABCD: ")
+        //; ?(a,b,c,d) // (1-based, 0-based, 1-based, 0-based)
+          
+    /**
+     * a and c are 0-based linenumbers. We convert them to 1-based because that is how eclipse describes the source location.
+     */
+    make-one-based-linenumbers-location = ?(a,b,c,d)
+        ; a' := <inc> a
+        ; c' := <inc> c
+        ; !(a',b,c',d)
+//editor-common.generated:
+//  origin-location  = prim("SSL_EXT_origin_location", <id>)
+//	get-aterm-location = origin-location // from editor-common.generated
+
+strategies
+	
+	
+	SET-DSL-PROGRAM-BASEPATH = ?dsl-program-basepath
+	; rules(
+		GET-DSL-PROGRAM-BASEPATH: _ -> dsl-program-basepath // string
+	)
+	
+	SET-OUTPUT-BASEPATH = ?output-basepath
+	; rules(
+		GET-OUTPUT-BASEPATH: _ -> output-basepath // string
+	)
+	
+	// dynamic rulper that can be used to temporary save an ATerm
+	SET-SAVED-ATERM = ?saved-aterm
+	;rules(
+	 	GET-SAVED-ATERM: _ -> saved-aterm
+	 )
+	 
+	// save the debug-information for the current term
+	// this contains the result of the last extract-transformation
+	// the GET-DEBUG-INFORMATION should be used in the generate transformation
+	SET-CURRENT-DEBUG-INFORMATION = ?current-debug-information
+	;rules(
+	 	GET-CURRENT-DEBUG-INFORMATION: _ -> current-debug-information
+	 )
+	 
+	SET-DSL-PROGRAM-FILENAME = ?dsl-program-filename
+	; rules(
+		GET-DSL-PROGRAM-FILENAME: _ -> dsl-program-filename
+	)
+	
+	SET-DSL-PROGRAM-SOURCE = ?dsl-program-aterm
+	; rules(
+		GET-DSL-PROGRAM-SOURCE: _ -> dsl-program-aterm // ATerm
+	)
+	
+    SET-LANGUAGE-ID = ?language-id
+    ; rules(
+        GET-LANGUAGE-ID: _ -> language-id // ATerm
+    )
+    
+    SET-POST-INSTRUMENTATION-NAME = ?post-instrumentation-name
+    ; rules(
+          GET-POST-INSTRUMENTATION-NAME: _ -> post-instrumentation-name
+    )
+    
+    SET-TOP-LEVEL-LOCATION = ?top-level-location
+    ; rules(
+          GET-TOP-LEVEL-LOCATION: _ -> top-level-location
+      )
+      
+    SET-SOURCE-FILES = ?source-files*
+    ; rules(
+          GET-SOURCE-FILES: _ -> source-files*
+      )

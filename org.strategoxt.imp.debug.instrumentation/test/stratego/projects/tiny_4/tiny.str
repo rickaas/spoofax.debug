@@ -1,0 +1,15 @@
+module tiny
+
+strategies
+	
+	foo-strat = id
+	
+	foo-strat2() = id
+	
+	foo-strat3(|) = id
+
+	foo-strat4(s) = id
+
+	foo-strat5(s|t) = id
+	
+	foo-strat6(|t) = id

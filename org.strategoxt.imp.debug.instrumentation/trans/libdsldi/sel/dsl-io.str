@@ -1,0 +1,113 @@
+module libdsldi/sel/dsl-io
+
+// generic stratego-code for SEL
+imports
+    libdsldi/sel/links // operate on the SEL definitions
+    libdsldi/sel/dynamic-call // the register
+    libdsldi/sel/instrument
+    libdsldi/sel/program-metadata
+    libdsldi/utils
+    libdsldi/sel/dsl-stub
+    libdsldi/logging/logging
+strategies
+
+    // Current term is the location of the dsl program, it is either absolute or relative to the current directory.
+    get-parsed-dsl-program = ?filename
+        //; dsl-program-abs-location := <concat-strings> [<GET-DSL-PROGRAM-BASEPATH>, "/", filename]
+        ; <dsl-specific-parse-file> filename // should be the DSL program, require DSL grammar
+
+    
+    // result is the ATerm representation
+    write-dsl-program = ?(output-filename, result)
+        ; 
+        (   
+            <notice(|"write-dsl-program: ")> output-filename
+            ; directory := <dirname> output-filename
+            ; <ensure-directory-exists> directory // make sure the entire path exists
+            ; <dsl-specific-write-file(|output-filename)> result
+        <+ 
+            (<err(|"Could not write program to ")> output-filename; fail)
+        )
+
+strategies
+    // generic file handling
+
+
+
+    // assume directory exists
+    // current term is ignored
+    // returns the result of <fopen> (Stream)
+    // howto write to the file:
+    // <fputs> (contents, handle)
+    get-file-handle(|filename) =
+        handle := <fopen> (filename, "w")
+
+
+
+    // writes contents to the file-handle
+    // returns the Stream
+    // cannot call fflush Primitive not defined: SSL_fflush when using java
+    write-contents-to-handle(|file-handle, contents) =  <fputs> (contents, file-handle) //; fflush
+
+
+
+    // closes the file-handle Stream
+    close-file-handle(|file-handle) = <fclose> file-handle
+    
+strategies
+
+  // accept a (filename, source-code)*
+  // filename is relative to the base-dir
+  write-files-relative(|base-dir):
+    transform-results* ->
+      writes*
+      with
+        writes* := <map(write-to-file-relative(|base-dir))> transform-results*
+
+
+  // filename is relative to base-dir
+  // filename should correspond to the package structure
+  write-to-file-relative(|base-dir) :
+    (filename, content) -> filename
+    where
+    <concat-strings> [base-dir, "/", filename] => absolutepath
+    ; <dirname> absolutepath => dir
+    ; <create-dir> dir
+    ; write-to-file(|absolutepath, content)
+
+
+
+    // assume the filename i valid location, its containing directory should exists
+    // current term is ignored
+    write-to-file(|filename, contents) = 
+        handle := <fopen> (filename, "w")
+        ; <fputs> (contents, handle)
+        ; fclose
+
+
+
+        
+    // check if the current term is a directory and it exists
+    // If it does not exist create the entire path
+    ensure-directory-exists =
+        ?directory
+        ; !directory
+        ; if not(file-exists ; filemode ; isdir) then
+              // directory does not exist, create it
+              <create-dir> directory
+          end
+
+
+
+
+    // Current term should be a directory path.
+    // Creates the full directory path.
+    create-dir =
+        ?directory
+        ; parent-dir := <dirname> directory
+        ; <ensure-directory-exists> parent-dir
+          // parent directory should exist now, just create the directory
+        ; !directory
+        ; (mkdir <+ <err(|"Could not create directory ")> directory)
+
+

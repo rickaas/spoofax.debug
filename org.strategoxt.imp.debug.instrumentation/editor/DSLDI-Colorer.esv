@@ -1,0 +1,14 @@
+module DSLDI-Colorer
+
+imports DSLDI-Colorer.generated
+
+colorer
+                                                                      
+  // This file can be used for custom colorer rules.                  
+  //                                                                  
+  // See the imported file for a brief introduction and examples.     
+  
+  colorer event colors
+  
+  EventType._ : blue
+  _.StrategyRef : darkgreen

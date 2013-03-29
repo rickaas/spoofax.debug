@@ -1,0 +1,16 @@
+module localmod/util/utils
+
+imports 
+	localmod/syntax/varsyntax
+	
+strategies
+	
+	is-empty = ?[] 
+	
+	
+	first = 
+		debug(!"first: ") ;
+		(is-empty < build-c + last)
+		
+		
+	build-c = !Comment("new", "created!!")

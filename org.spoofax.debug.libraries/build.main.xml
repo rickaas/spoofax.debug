@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<project name="org.spoofax.debug.libraries" default="update-jars" basedir=".">
+	
+	<!-- http://stackoverflow.com/questions/4206080/how-can-i-allow-an-ant-property-file-to-override-the-value-set-in-another
+	    This way:
+        1. Anything set at the command line takes precedence over build.properties
+        2. Anything set in build.properties overrides other values
+        3. etc. on down the line.
+	 -->
+	<property file="build.properties" description="local build configuration overrides"/>
+	<property file="project.properties" description="Project configuration properties"/>
+	<property file="build-defaults.properties" description="default build configuration."/>
+	
+	<!-- WebDSL tryfinally compiler -->
+	<loadproperties srcFile="config.properties" />
+	
+	<property name="lib.dsldi.dir" location="lib/libdsldi" />
+	<property name="lib.runtime.dir" location="lib/runtime" />
+	
+	<target name="copy-spoofax.debug-jars">
+        <copy todir="${lib.runtime.dir}" preservelastmodified="true" overwrite="true">
+        	<fileset dir="${spoofax.debug.interfaces.home}/build/jar" />
+        	<fileset dir="${spoofax.debug.interfaces.java.home}/build/jar" />
+		</copy>
+	</target>
+	
+	
+   <target name="copy-dsldi-jars">
+   	<echo message="updating dsldi..."/>
+        <mkdir dir="${lib.dsldi.dir}"/>
+        <copy todir="${lib.dsldi.dir}" preservelastmodified="true" overwrite="true">
+            <fileset dir="${dsldi.home}/dist" />
+        </copy>
+    </target>
+	
+	<target name="build-dsldi-jars">
+		<ant antfile="${dsldi.home}/build.main.xml" target="all" dir="${dsldi.home}"/> 
+	</target>
+	
+   <target name="build-spoofax.debug-jars">
+        <ant antfile="${spoofax.debug.interfaces.java.home}/build.main.xml" target="release" dir="${spoofax.debug.interfaces.java.home}"/> 
+    </target>
+	
+	<!--<target name="update-dsldi-jars" depends="build-dsldi-jars,copy-dsldi-jars">-->
+	<target name="update-dsldi-jars" depends="copy-dsldi-jars">
+		<description>Get all the required jars from the org.strategoxt.imp.debug.instrumentation project</description>
+	</target>
+	
+   <!--<target name="update-spoofax.debug-jars" depends="build-spoofax.debug-jars,copy-spoofax.debug-jars">-->
+	<target name="update-spoofax.debug-jars" depends="copy-spoofax.debug-jars">
+        <description>Get all the required jars from the org.spoofax.debug.interfaces.java project</description>
+    </target>
+	
+	<target name="update-jars" depends="update-dsldi-jars,update-spoofax.debug-jars"/>
+	
+</project>

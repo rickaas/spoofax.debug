@@ -1,0 +1,36 @@
+module tiny
+
+strategies
+  foo-strat =
+    ENTER(
+    | "tiny.str"
+    , "foo-strat"
+    , "5"
+    , "1"
+    , "5"
+    , "35"
+    )
+    ; ?match
+    ; debug(!"foo: ")
+
+  bar-strat =
+    ENTER(
+    | "tiny.str"
+    , "bar-strat"
+    , "7"
+    , "1"
+    , "7"
+    , "35"
+    )
+    ; ?match
+    ; debug(!"foo: ")
+      
+      
+strategies
+	ENTER(|filename, methodname, a, b, c, d) = ?p
+	
+	EXIT(|filename, methodname, a, b, c, d) = ?p
+	
+	STEP(|filename, methodname, a, b, c, d) = ?p
+	
+	VAR(|filename, methodname, a, b, c, d) = ?p

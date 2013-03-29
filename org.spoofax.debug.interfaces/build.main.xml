@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<project name="org.spoofax.debug.interfaces" default="release" basedir=".">
+
+    <property name="src.dir" value="src"/>
+    <property name="build.dir" value="build"/>
+
+    <property name="classes.dir" value="${build.dir}/classes"/>
+    <property name="jar.dir" value="${build.dir}/jar" />
+
+    <property name="jar.name" value="org.spoofax.debug.interfaces" />
+    
+    <target name="compile">
+        <mkdir dir="${classes.dir}"/>
+        <javac srcdir="${src.dir}" destdir="${classes.dir}" source="1.5" target="1.5" debug="on">
+        </javac>
+    </target>
+
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+    </target>
+
+    <target name="jar" depends="compile">
+        <mkdir dir="${jar.dir}"/>
+        <jar basedir="${classes.dir}" destfile="${jar.dir}/${jar.name}.tmp.jar"/>
+        <move file="${jar.dir}/${jar.name}.tmp.jar" tofile="${jar.dir}/${jar.name}.jar"/>
+    </target>
+
+    <target name="jar-source">
+        <jar destfile="${jar.dir}/${jar.name}-source.tmp.jar">
+            <fileset dir="${src.dir}">
+            </fileset>
+        </jar>
+        <move file="${jar.dir}/${jar.name}-source.tmp.jar" tofile="${jar.dir}/${jar.name}-source.jar" />
+    </target>
+
+    <target name="release" depends="clean, jar, jar-source" />
+</project>

@@ -1,0 +1,10 @@
+module strategodebuglib
+
+strategies
+	ENTER(|filename, methodname, a, b, c, d) = ?p
+	
+	EXIT(|filename, methodname, a, b, c, d) = ?p
+	
+	STEP(|filename, methodname, a, b, c, d) = ?p
+	
+	VAR(|filename, methodname, a, b, c, d) = ?p

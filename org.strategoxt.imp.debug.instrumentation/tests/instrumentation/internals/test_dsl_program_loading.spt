@@ -1,0 +1,36 @@
+module test_dsl_program_loading
+
+language DSLDI
+
+
+test get stratego files in dynamic project
+	!("test/stratego/projects/dynamic", ["str"])
+	;get-dsl-program-files 
+	 => ["test/stratego/projects/dynamic/localvar.str"]
+
+
+test get stratego files in invalid-program project
+	!("test/stratego/projects/invalid-program", ["str"])
+	;get-dsl-program-files
+	 => ["test/stratego/projects/invalid-program/program.str"]
+
+
+test get stratego files in localvar project
+	!("test/stratego/projects/localvar", ["str"])
+	;get-dsl-program-files
+	 => ["test/stratego/projects/localvar/localvar.str"]
+	 
+test get stratego files in testimports project
+	!("test/stratego/projects/testimports", ["str"])
+	;get-dsl-program-files
+	 => ["test/stratego/projects/testimports/localmod/util/utils.str","test/stratego/projects/testimports/localmod/syntax/varsyntax.str","test/stratego/projects/testimports/localvar.str"]
+	 
+test get stratego files in tiny project
+	!("test/stratego/projects/tiny", ["str"])
+	;get-dsl-program-files
+	 => ["test/stratego/projects/tiny/tiny.str"]
+	 
+test get stratego files in tiny-1 project
+	!("test/stratego/projects/tiny_1", ["str"])
+	;get-dsl-program-files
+	 => ["test/stratego/projects/tiny_1/tiny.str"]

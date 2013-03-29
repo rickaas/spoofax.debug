@@ -1,0 +1,19 @@
+../str-lib/dsldi.ctree: \
+	./libdsldi/sel/dynamic-call.str \
+	./libdsldi/sel/result-reporting.str \
+	./libdsldi/sel/dsl-stub.str \
+	./libdsldi/sel/dsl-io.str \
+	./libdsldi/sel/program-metadata.str \
+	/nix/store/dk913kdyv8747yq5d1pz1cy2w1y1s8q8-strategoxt-1.8pre21513/share/stratego-lib/libstrategolib.rtree \
+	./libdsldi/logging/logging.str \
+	./libdsldi/utils.str \
+	./libdsldi/sel/options.str \
+	./libdsldi/sel/instrument.str \
+	./libdsldi/sel/links.str \
+	/nix/store/dk913kdyv8747yq5d1pz1cy2w1y1s8q8-strategoxt-1.8pre21513/share/libstratego-sglr.rtree \
+	..//lib/editor-common.generated.str \
+	..//include/DSLDI.str \
+	/nix/store/dk913kdyv8747yq5d1pz1cy2w1y1s8q8-strategoxt-1.8pre21513/share/libstratego-aterm.rtree \
+	/nix/store/dk913kdyv8747yq5d1pz1cy2w1y1s8q8-strategoxt-1.8pre21513/share/libstratego-gpp.rtree \
+	/nix/store/dk913kdyv8747yq5d1pz1cy2w1y1s8q8-strategoxt-1.8pre21513/share/libstratego-lib.rtree \
+	./dsldi.str

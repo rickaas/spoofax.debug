@@ -1,0 +1,115 @@
+module test_parse
+
+language DSLDI
+
+test parse test 1 [[
+instrumentation
+
+event enter at _.FunctionDecl 
+			creates gen-func-enter
+			from extract-function-debug-info
+event step  at Statement._
+		    creates gen-stat-step
+		    from extract-statement-debug-info
+]] parse
+
+test parse test 2 [[
+instrumentation
+
+event enter at _.FunctionDecl 
+			creates gen-func-enter
+			from extract-function-debug-info
+
+]] parse to SEL(
+      InstrBlock(
+        [ Link(
+            Enter()
+          , SortAndConstructor(Empty(), Constructor("FunctionDecl"))
+          , StrategyRef("gen-func-enter")
+          , StrategyRef("extract-function-debug-info")
+          )
+        ]
+      )
+    )
+
+test parse test 3 [[
+instrumentation
+
+event enter at _.FunctionDecl 
+			creates gen-func-enter
+			from extract-function-debug-info
+
+]] parse to SEL(
+      InstrBlock(
+        [ Link(
+            Enter()
+          , SortAndConstructor(Empty(), Constructor("FunctionDecl"))
+          , StrategyRef("gen-func-enter")
+          , StrategyRef("extract-function-debug-info")
+          )
+        ]
+      )
+    )
+
+test parse test 4 [[
+instrumentation
+
+event enter at Statement.FunctionDecl 
+			creates gen-func-enter
+			from extract-function-debug-info
+
+]] parse to SEL(
+      InstrBlock(
+        [ Link(
+            Enter()
+          , SortAndConstructor(Sort("Statement"), Constructor("FunctionDecl"))
+          , StrategyRef("gen-func-enter")
+          , StrategyRef("extract-function-debug-info")
+          )
+        ]
+      )
+    )
+
+test parse test 5 [[
+instrumentation
+
+event enter at Statement._ 
+			creates gen-func-enter
+			from extract-function-debug-info
+
+]] parse to SEL(
+      InstrBlock(
+        [ Link(
+            Enter()
+          , SortAndConstructor(Sort("Statement"), Empty())
+          , StrategyRef("gen-func-enter")
+          , StrategyRef("extract-function-debug-info")
+          )
+        ]
+      )
+    )
+
+test parse test 5 [[
+instrumentation
+]] parse to SEL(InstrBlock([]))
+/*
+// parse a file
+// /home/rlindeman/Applications/development/eclipse/helios_sdk/workspace/org.strategoxt.imp.debug.instrumentation/tests/example.dsldi
+// example.dsldi
+test parse test 6 [[
+	"/home/rlindeman/Applications/development/eclipse/helios_sdk/workspace/org.strategoxt.imp.debug.instrumentation/tests/example.dsldi"
+]]
+run parse-dsldi-file 
+*/
+
+/*
+test String-based arithmetic API
+  <parse-dsldi-file> "/home/rlindeman/Applications/development/eclipse/helios_sdk/workspace/org.strategoxt.imp.debug.instrumentation/tests/example.dsldi" 
+  => SEL(InstrBlock([Link(Enter,SortAndConstructor(Sort("StrategyDef"),Empty),StrategyRef("gen-enter"),StrategyRef("extract-strategy-debug-info"))]))
+*/
+
+/*
+test parse from file example.sel
+  <parse-file> "./test/testdata/example.sel" 
+  => SEL(InstrBlock([Link(Enter,SortAndConstructor(Sort("StrategyDef"),Empty),StrategyRef("gen-enter"),StrategyRef("extract-strategy-debug-info"))]))
+*/

@@ -1,0 +1,82 @@
+module libdsldi/sel/dsl-stub
+
+imports
+    libdsldi/sel/program-metadata
+    libdsldi/sel/dynamic-call
+
+imports
+    libdsldi/logging/logging
+// stratego specific stuff, TODO: remove this
+//imports
+//    stratego/str-io
+
+strategies
+    
+    try-get-language-id =
+        GET-LANGUAGE-ID <+ (err-msg(|"Could not get language id for this instrumentation."); fail)
+    
+    // current term is a file-location (absolute or relative to the current directory)
+    dsl-specific-parse-file = ?filename
+        //; language-id := <GET-LANGUAGE-ID>
+        ; language-id := <try-get-language-id>
+        ; <dbg(|"Trying to find parse strategy for language: ")> language-id
+        ; if load-dsl-specific-parse-file(|language-id) then
+              parse-file-strategy-name := <load-dsl-specific-parse-file(|language-id)>
+              ; <do-the-parsing(|parse-file-strategy-name)> filename
+          else
+              <err(|"Could not find parse strategy for ")> language-id
+              ; fail
+          end
+
+
+    do-the-parsing(|parse-file-strategy-name) = ?filename
+        ; <notice(|"Parsing source file ")> filename
+        ; <dbg(|"with parse strategy: ")> parse-file-strategy-name
+        //; <java-invoke-strategy(|parse-file-strategy-name)> filename
+        ; <java-call-parse-strategy(|parse-file-strategy-name)> filename
+        <+ (
+            <err(|"Invoking parse strategy failed ")> parse-file-strategy-name
+            ; fail
+        )
+
+    dsl-specific-write-file(|output-filename) = ?dsl-ast
+        //; language-id := <GET-LANGUAGE-ID>
+        ; language-id := <try-get-language-id>
+        ; <dbg(|"Trying to find write strategy for language: ")> language-id
+        ; if load-dsl-specific-write-file(|language-id) then
+              write-file-strategy-name := <load-dsl-specific-write-file(|language-id)>
+              ; !(output-filename, dsl-ast)
+              ; do-the-writing(|write-file-strategy-name) <+ (fail)
+          else
+              <err(|"Could not find write strategy for ")> language-id
+              ; fail
+          end
+
+    do-the-writing(|write-file-strategy-name) = ?(output-filename, dsl-ast)
+        ; <notice(|"Writing to target file ")> output-filename
+        ; <dbg(|"with write strategy: ")> write-file-strategy-name
+        //; <java-invoke-strategy(|write-file-strategy-name)> (output-filename, dsl-ast)
+        ; <java-call-write-strategy(|write-file-strategy-name)> (output-filename, dsl-ast)
+        <+ (
+            <err(|"Invoking write strategy failed")> write-file-strategy-name
+            ; fail
+        )
+    
+    // register a strategy name that can parse files for the given language
+    add-dsl-specific-parse-file = ?(language-id, parse-file-strategy-name)
+        // ; rules(
+        //     GetParseStrategyName :+ x -> x
+        // )
+        ; rules(
+            GetParseStrategyName :+ language-id -> parse-file-strategy-name
+        )
+        
+    // register a strategy name that can write files for the given language
+    add-dsl-specific-write-file = ?(language-id, write-file-strategy-name)
+        ; rules(
+            GetWriteStrategyName :+ language-id -> write-file-strategy-name
+        )
+        
+    load-dsl-specific-parse-file(|language-id) = <GetParseStrategyName> language-id
+    
+    load-dsl-specific-write-file(|language-id) = <GetWriteStrategyName> language-id

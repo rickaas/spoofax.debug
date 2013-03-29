@@ -1,0 +1,12 @@
+module libdsldi/main
+
+imports libdsldi/-
+imports libdsldi/logging/-
+imports libdsldi/sel/-
+
+strategies
+    launch-di = //java-monitor-start(|"main");
+        //option-wrap(create-options, create-usage, default-system-about, main-stub)
+        option-wrap(create-dsldi-options, execute-wrap)
+        
+    main-stub = !"MAIN_STUB"

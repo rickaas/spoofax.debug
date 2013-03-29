@@ -1,0 +1,93 @@
+module libdsldi/sel/options
+
+strategies
+/*
+An Option is a single argument
+An ArgOption is an argument followed by another argument (e.g. --input-dir my/input/directory)
+
+http://hydra.nixos.org/build/2230584/download/1/manual/chunk-chapter/library-options.html
+    
+*/
+	
+	create-dsldi-io-options = 
+		ArgOption("--input-dir"
+			, <set-config> ("--input-dir", <id>)
+			, !"--input-dir DIRECTORY      Input directory, contains all DSL files"
+		)
+		+ ArgOption("--output-dir"
+			, <set-config> ("--output-dir", <id>)
+ 			, !"--output-dir DIRECTORY     Output directory, generated files will be saved in this directory"
+		)
+        + ArgOption("--input-file"
+            , <set-config> ("--input-file", <id>)
+            , !"--input-file FILE          Only instrument a single"
+        )
+        + Option("--fake-run"
+            , <set-config> ("--fake-run", "on")
+            , !"--fake-run                 Only list files that will be instrumented"
+            )
+        + Option("--pipe"
+            , <set-config> ("--pipe", "on")
+            , !"--pipe                     Print instrumented ATerm to stdout, only works in combination with --input-file"
+            )
+
+    create-dsldi-optional-options = 
+        ArgOption("--sel"
+            , <set-config> ("--sel", <id>)
+            , !"--sel FILE          SEL definition"
+        )
+        // TODO: --file-extension (optional) is followed by a list
+        + ArgOption("--file-extension"
+            , where(<extend-config> ("--file-extension", [<id>]))
+            , !"--file-extension extension   Instrument these files"
+        )
+        + Option("--allow-no-instrumentation-failures"
+            , <set-config> ("--allow-no-instrumentation-failures", "on")
+            , !"--allow-no-instrumentation-failures"
+        )
+        + ArgOption("--report-failed-files"
+            , <set-config> ("--report-failed-files", <id>)
+            , !"--report-failed-files FILENAME  Write the locations of files for which instrumentation failed to this file"
+        )
+        + ArgOption("--report-succeeded-files"
+            , <set-config> ("--report-succeeded-files", <id>)
+            , !"--report-succeeded-files FILENAME  Write the locations of files for which instrumentation succeeded to this file"
+        )
+        + ArgOption("--report-runtime-properties"
+            , <set-config> ("--report-runtime-properties", <id>)
+            , !"--report-runtime-properties FILENAME  Write java runtime properties to disk"
+        )
+
+
+	create-dsldi-options =
+	    create-dsldi-io-options
+	    + create-dsldi-optional-options
+	    + statistics-option
+	    + verbose-option
+
+	get-config-sel = <get-config> "--sel"
+	
+	// not required if --pipe is used
+	get-config-output-dir = <get-config> "--output-dir"
+	
+	// required
+	get-config-input-dir = <get-config> "--input-dir"
+	
+	// required if --input-file is not used
+	get-config-file-extension =
+    <get-config> "--file-extension" <+ ![]
+    
+    get-config-is-fake-run = <get-config> "--fake-run"
+    
+    // Only instrument a single file
+    get-config-single-input-file = <get-config> "--input-file"
+    
+    // --pipe can only be used with a single file
+    get-config-is-pipe = <get-config> "--pipe"
+    
+    // extract / generate could throw fail, we can recover from them by ignoring the result or we stop the instrumentation
+    get-config-allow-no-instrumentation-failures = <get-config> "--allow-no-instrumentation-failures"
+    
+    get-report-failures-location = <get-config> "--report-failed-files"
+    get-report-success-location = <get-config> "--report-succeeded-files"
+    get-runtime-report = <get-config> "--report-runtime-properties"

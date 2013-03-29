@@ -1,0 +1,134 @@
+module libdsldi/sel/result-reporting
+
+signature
+  constructors
+      // name, followed by a list of expression
+      
+      // source-filename, target-filename
+      Success       : ID * ID -> InstrumentationResult
+      
+      // source-filename
+      Failure      : ID * ID -> InstrumentationResult
+
+imports
+    libdsldi/logging/logging // logging
+    libdsldi/utils
+    
+imports
+    libdsldi/sel/options
+    libdsldi/sel/dsl-io
+    
+strategies
+    isSuccess :
+        s@Success(_,_) -> s
+    isFailure :
+        f@Failure(_,_) -> f
+
+    getFilenamesWithSuccess =
+        filter(isSuccess) ; map(\Success(input, output) -> input\)
+    getFilenamesWithFailure =
+        filter(isFailure) ; map(\Failure(message, location) -> location\)
+        
+    result-item-to-row-string :
+        Failure(message, location) -> <separate-by(|"\t"); concat-strings> [location, message]
+    result-item-to-row-string :
+        Success(input, output) -> <separate-by(|"\t"); concat-strings> [input, output]
+        
+    /**
+     * Write instrumentation statistics to STDOUT
+     * Returns a list of terms, each item in de list is Success or Failure term and corresponds to an instrumented file.
+     */
+    report-instrumentation =
+        result := <GET-INSTRUMENTATION-SUMMARY>
+        ; log-info-msg(|"Instrumentation summary:")
+        ; suc-count := <filter(isSuccess); length> result
+        ; fail-count := <filter(isFailure); length> result
+        ; <log-info(|"instrumented file count: ")> suc-count
+        ; <log-info(|"instrumentation failed count: ")> fail-count
+        ; if get-report-failures-location then
+              get-report-failures-location
+              ; log-info(|"Creating report with failed files:")
+              ; !result
+              ; create-result-report(isFailure, result-item-to-row-string|<get-report-failures-location>)
+          end
+        ; if get-report-success-location then
+              get-report-success-location
+              ; log-info(|"Creating report with succeeded files...")
+              ; !result
+              ; create-result-report(isSuccess, result-item-to-row-string|<get-report-success-location>)
+          end
+        //; !("foo.aterm", "contents")
+        ; !result
+    
+    create-result-report(result-filter, result-item-to-row-string|report-location) = ?result
+        ;filter(result-filter)
+        ;map(result-item-to-row-string)
+        ; separate-by(|"\n")
+        ; concat-strings => contents
+        ; write-to-file(|report-location, contents)
+          <+ <err(|"Could not write report to:")> report-location
+
+    
+    failed-extract(|extract-name) =
+        ?program-fragment-aterm
+        ; <err(|"Failed to execute extract strategy: ")> extract-name
+        ; <log-debug-depth(err(|"... on term:"))> program-fragment-aterm
+        ; <log-vomit(|"... on term: ")> program-fragment-aterm
+
+    failed-generate(|generate-name) =
+        ?program-fragment-aterm
+        ; <err(|"Failed to execute generate strategy: ")> generate-name
+        ; <log-debug-depth(err(|"... on term:"))> program-fragment-aterm
+        ; <log-vomit(|"... on term: ")> program-fragment-aterm
+          
+    // a list of terms, each item in de list is Success or Failure term and corresponds to an instrumented file.
+    SET-INSTRUMENTATION-SUMMARY = ?result
+        ; rules(GET-INSTRUMENTATION-SUMMARY: _ -> result)
+
+    // the total number of files that will be instrumented
+    SET-TOTAL-WORKUNITS = ?count
+        ;rules(GET-TOTAL-WORKUNITS: _ -> count)
+
+    // the progress, should be between 0 and GET-TOTAL-WORKUNITS
+    SET-WORKUNIT-PROGRESS = ?progress
+        ;rules(GET-WORKUNIT-PROGRESS: _ -> progress)
+         
+    next-workunit = 
+        GET-WORKUNIT-PROGRESS
+        ; inc
+        ; SET-WORKUNIT-PROGRESS
+          
+    workunit-progress-as-string =
+        <concat-strings> [
+            <GET-WORKUNIT-PROGRESS; int-to-string>,
+            "/",
+            <GET-TOTAL-WORKUNITS; int-to-string>
+        ]
+        
+strategies
+
+  /**
+   * @param s The strategy for which we'll do the timing
+   * @param msg A message to describe the strategy in the logs
+   * @param level The logging level of the statistics
+   */
+  dsldi-log-timed(s|msg,severity : Severity) =
+    ?current
+    ; level := <verbose-level> severity
+    ; if <geq>(<get-config> "--statistics", level) then
+      where(times => starttime)
+    ; !current; s
+    ; where(
+        <diff-times>(<times>,starttime)
+      ; <concat-strings>[ <align-left>(' ', msg, 27)
+                        , " : [user/system] = ["
+                        , <self-children-user-time; ticks-to-seconds ; real-to-string(|2)>
+                        , "s/"
+                        , <self-children-sys-time; ticks-to-seconds ; real-to-string(|2)>
+                        , "s]"
+                        ]
+      ; log(|Info(),<id>)
+      )
+    else
+      !current; s
+    end

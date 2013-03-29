@@ -1,0 +1,34 @@
+%% Grammar for the DSLDI language
+%% By default, based on an example "entities" syntax
+module DSLDI
+
+%% syntax should look something like this:
+%%    completion template : Start =      "module " <m> (blank)
+%%     "completion" "template" ":" Sort "=" CompletionPart CompletionPart* CompletionAnno -> SemanticRule {cons("CompletionTemplateWithSort")}
+%%
+%% or like the coloring
+%% Sort-based highlighting with background color                                           
+%%   Id: yellow green                                                                      
+%%                                                                                         
+%% Sort- and constructor-based highlighting                                                
+%%   ClassBodyDec.MethodDec: yellow                                                        
+%%                                                                                         
+%% Constructor-based highlighting                                                          
+%%   _.MethodDec: 255 0 0
+                                                                  
+imports Common
+
+imports SyntaxEventLinking
+
+%% exports
+%% 
+%%   context-free start-symbols
+%%     Start
+%% 
+%%   context-free syntax
+%%   
+%%     "module" ID Definition*       -> Start {cons("Module")}
+%%     "entity" ID "{" Property* "}" -> Definition {cons("Entity")}
+%%     ID ":" Type                   -> Property {cons("Property")}
+%%     ID                            -> Type {cons("Type")}
+

@@ -1,0 +1,1 @@
+[(Function("fname",[Assign("var_foo",Add(Number(2),Number(7))),Print("var_foo")]),Comment("fname","laalalalalalalalalal")),(Function("nocomment",[Assign("var_foo",Add(Number(2),Number(7))),Print("var_foo")]),Comment("new","created!!"))]

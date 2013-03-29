@@ -1,0 +1,5 @@
+module strategydef
+
+strategies
+
+//	bottomup(s) = all(bottomup(s)); s

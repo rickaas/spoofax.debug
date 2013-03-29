@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?eclipse version="3.0"?>
+
+<plugin>
+       <extension point="org.eclipse.imp.runtime.languageDescription">
+          <language extensions="dsldi" description="DSLDI" language="DSLDI" derivedFrom="DynamicRoot" validator="org.strategoxt.imp.debug.instrumentation.DSLDIValidator" validatorClass="org.strategoxt.imp.debug.instrumentation.DSLDIValidator"></language>
+       </extension>
+       <extension id="org.strategoxt.imp.debug.instrumentation.parser" name="DSLDI Parser" point="org.eclipse.imp.runtime.parser">
+          <parser class="org.strategoxt.imp.debug.instrumentation.DSLDIParseController" language="DSLDI">
+          </parser>
+       </extension>    
+    </plugin>

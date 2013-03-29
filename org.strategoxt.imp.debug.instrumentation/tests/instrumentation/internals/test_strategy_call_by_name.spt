@@ -1,0 +1,24 @@
+module test_stratego
+
+language DSLDI
+
+/*
+Test dynamic calling of predefined strategies
+*/
+
+test call strategy by name generate
+	!Foo("bar")
+	//; debug(!"start ")
+	//; java-strategy
+	;java-register-gen-strategy(!"example1"|"call-this-strat-by-name-example1")
+	; java-call-gen-strategy(|"call-this-strat-by-name-example1")
+	  => "example1"
+	//; java-register-extract-strategy(call-this-strat-by-name-example2|"call-this-strat-by-name-example2")
+	
+test call strategy by name extract
+	!Foo("bar")
+	//; debug(!"start ")
+	//; java-strategy
+	;java-register-gen-strategy(!"example2"|"example2")
+	; java-call-gen-strategy(|"example2")
+	  => "example2"

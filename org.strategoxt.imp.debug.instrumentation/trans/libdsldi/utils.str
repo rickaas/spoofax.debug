@@ -1,0 +1,118 @@
+module utils
+
+imports
+    libstrategolib
+    
+imports
+    libdsldi/logging/logging
+
+// some file utils
+strategies
+	
+  // splits the path in two paths, first is base-path, second is the path-part after the base-path (trim leading "/")
+  split-path(|base-path) :
+  	path -> (parent-path, child-path)
+  	where <string-starts-with(|base-path)> path // path should start with the base-path
+  	where
+  		sub-string-length := <string-length> base-path
+  		; full-string-length := <string-length> path
+  		; string-list := <explode-string> path
+  		; <split-at(|sub-string-length)> string-list => (p0, p1)
+  		; parent-path := <implode-string> p0
+  		; child-path := <implode-string; ltrim-chars(?'/')> p1
+  		  
+  		  
+	// fails if the current path does not have the ".str"-extension or when it is a directory
+	is-dsl-file(|ext) = has-extension(|ext); file-exists; filemode; not(isdir)
+	
+	// returns a list of paths, for which the strategy s holds.
+	// Strategy s should make the distinction between files and directories if needed,
+	// as s is applied to all elements in a directory (the elements returned by <readdir>).
+	// When s is called the current term is a complete path.
+	//
+	// current term should be a String pointing to a directory name
+	walk-dir(file-filter | root-directory) = 
+		?base-dir
+		; log-vomit(|"Walking directory: ")
+		; readdir //
+		; log-vomit(|"Directory contents: ")
+		// prefix the file name with the base-dir otherwise we cannot determine if some locations are directories
+		; fullpaths* := <map(prefix-with(|base-dir))> 
+		// after keeping the files that match the filter we remove the DSL-PROGRAM-BASEPATH prefix to keep the matches files relative
+		// Note that base-dir does not have to correspond to DSL-PROGRAM-BASEPATH
+		; matched-files* := <filter(file-filter); flatten-list; map(split-path(|root-directory); Snd)>
+		; log-vomit(|"Matched files: ")
+		; dirs-only* := <filter-dirs> fullpaths* // keep directories
+		; matched-in-subdirs* := <map(walk-dir(file-filter|root-directory)) ; flatten-list> dirs-only*
+		; <flatten-list> [matched-in-subdirs*, matched-files*]
+		// walk over the directories
+	
+	// prefix the current file name with a path prefix
+	prefix-with(|prefix) :
+		filename -> path
+		with
+			path := <concat-strings> [prefix, "/", filename]
+	
+	// in the list of paths, only keep the ones that are directories
+	filter-dirs :
+		paths* -> dirs*
+		with
+		 dirs* := <filter(file-exists ; filemode ; isdir)> paths*
+		 //< list-dirs-in-dir + ![]
+	
+	keep-extensions-filter(|extensions) :
+	    filename -> keeps
+	    where
+	        <is-list> extensions
+	        ; keeps := <filter(!(<id>, filename); check-ext)> extensions
+	        
+    keep-extensions-filter(|extension) :
+        filename -> keeps
+        where
+            <is-string> extension
+            ; keeps := <filter(!(<id>, filename); check-ext)> [ extension ]
+	/*
+	Current term is a filename.
+	Returns the [filename] when the filename has one of the given extension.
+	Else return [].
+	*/
+	// keep-extensions-filter(|extensions) =
+	// 	?filename
+	// 	; if <is-list> extensions then 
+	// 	  // current term is a list
+	// 	  	debug(!"is-list") ;
+	// 	  	!extensions 
+	// 	  else 
+	// 	  	debug(!"not-list") ;
+	// 	  	if <is-string> extensions then
+	// 	  		debug(!"is-string")
+	// 	  	else
+	// 	  	    !extensions
+	// 	  	    log-warn(|"Cannot apply extension filtering on ")
+	// 	  	    end
+	// 	  end
+	// 	; keeps := <filter(!(<id>, filename); check-ext)> extensions
+
+	/*
+	Current term is (extension, filename).
+	The strategy fail when filename does not end with the extension or when it is a directory
+	*/
+	//check-ext = ?(ext, filename); !filename; has-extension(|ext)
+	check-ext = ?(ext, filename); !filename; has-extension(|ext); file-exists; filemode; not(isdir)
+	
+	get-current-working-directory = getcwd
+	
+strategies
+
+    
+  log-debug-depth(logging-strategy) = ?term;
+    log-debug-depth(logging-strategy, !4, !term)
+
+  log-debug-depth(logging-strategy, depth) = ?term;
+    log-debug-depth(logging-strategy, depth, !term)
+    
+  log-debug-depth(logging-strategy, depth, s) = 
+    where(  
+      at-depth(depth, !"...")
+    ; s; logging-strategy
+    )

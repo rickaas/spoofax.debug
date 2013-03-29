@@ -1,0 +1,7 @@
+module tiny
+
+strategies
+	
+	foo-strat = ?match; debug(!"foo: ")
+	
+	bar-strat = ?match; debug(!"bar: ")

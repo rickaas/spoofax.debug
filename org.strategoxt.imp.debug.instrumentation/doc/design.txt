@@ -1,0 +1,40 @@
+Components:
+SEL editor (spoofax project)
+debug instrumentation (commandline utility)
+generic debug runtime (java jar)
+generic debugger (Eclipse plugin)
+
+Artifacts:
+dsldi.jar (contains code for the SEL editor, written in stratego)
+dsldi-java.jar (external code, written in java)
+libdsldi.jar (stratego code that performs the instrumentation)
+
+Instrumentation order:
+
+This is OK:
+function-argument
+function-argument
+enter
+try {
+   ...
+} finally {
+   exit
+}
+
+This is OK:
+function-argument
+function-argument
+try {
+   enter
+   ...
+} finally {
+   exit
+}
+
+The function argument event has to be before the enter event.
+The enter/exit events are basically push-scope/pop-scope.
+The function arguments are part of the push-scope
+
+variable definition within a scope, the var is undefined when the scope is popped
+variable assign, update the value
+pop-scope, if the variable was defined in this scope, undefine the scope 

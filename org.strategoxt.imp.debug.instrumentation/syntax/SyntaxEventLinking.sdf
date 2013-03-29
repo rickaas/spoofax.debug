@@ -1,0 +1,39 @@
+module SyntaxEventLinking
+
+imports Common
+
+exports  
+  context-free start-symbols SEL 
+  context-free syntax
+
+%% different sections allow ref by name
+
+InstrBlock              -> SEL {cons("SEL")}
+
+"instrumentation" InstrSpec* -> InstrBlock {cons("InstrBlock")}
+"event" EventType "at" SyntaxConstruct 
+  "creates" ExtractStrategyName "from" GenStrategyName -> InstrSpec {cons("Link")}
+
+Node -> SyntaxConstruct
+StrategyName -> ExtractStrategyName {cons("StrategyRef")}
+StrategyName -> GenStrategyName {cons("StrategyRef")}
+
+"enter" -> EventType {cons("Enter")}
+"exit" -> EventType {cons("Exit")}
+"step" -> EventType {cons("Step")}
+"var" -> EventType {cons("Var")}
+
+EXTENDED-ID -> Name
+EXTENDED-ID -> StrategyName
+
+
+%%    Sort                   -> Node
+%%    Constructor            -> Node
+"_"             -> Sort {cons("Empty")}
+EXTENDED-ID     -> Sort {cons("Sort")}
+EXTENDED-ID "*" -> Sort {cons("ListSort")}
+    
+"_"             -> ConstructorId {cons("Empty")}
+EXTENDED-ID     -> ConstructorId {cons("Constructor")}
+
+Sort "." ConstructorId -> Node {cons("SortAndConstructor")}

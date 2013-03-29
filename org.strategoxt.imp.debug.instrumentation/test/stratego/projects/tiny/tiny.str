@@ -1,0 +1,29 @@
+module tiny
+
+strategies
+	
+	foo-strat = ?match; debug(!"foo: ")
+	
+	bar-strat = ?match; debug(!"foo: ")
+	
+// f123 = ?a
+// f123 = ?bb
+// 
+// f123 =  ?bb
+// 
+//  f123 = ?a
+// 	f123 = ?a
+// 	
+// f123 = ?a
+// ; b
+// 
+// f123 = ?a
+// ; bb
+// 
+// f123 = ?a
+//  ; b
+// 
+// f =?b f=?b
+//	fooo = ENTER(|"filename", "name", (0,1,2,3))
+	
+//	ENTER(|a,b,c) = id

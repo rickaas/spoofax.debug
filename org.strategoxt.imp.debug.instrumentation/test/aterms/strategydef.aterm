@@ -1,0 +1,15 @@
+Module(
+  "strategydef"{Location(1, 8, 1, 19)}
+, [ Strategies(
+      [ SDef(
+          "bottomup"{Location(5, 2, 5, 10)}
+        , [DefaultVarDec("s"{Location(5, 11, 5, 12)}){Location(5, 11, 5, 12)}]
+        , Seq(
+            All(Call(SVar("bottomup"{Location(5, 20, 5, 28)}){Location(5, 20, 5, 28)}, [CallNoArgs(SVar("s"{Location(5, 29, 5, 30)}){Location(5, 29, 5, 30)}){Location(5, 29, 5, 30)}]){Location(5, 20, 5, 31)}){Location(5, 16, 5, 32)}
+          , CallNoArgs(SVar("s"{Location(5, 34, 5, 35)}){Location(5, 34, 5, 35)}){Location(5, 34, 5, 35)}
+          ){Location(5, 16, 5, 35)}
+        ){Location(5, 2, 5, 35)}
+      ]
+    ){Location(3, 1, 5, 35)}
+  ]
+){Location(1, 1, 5, 35)}

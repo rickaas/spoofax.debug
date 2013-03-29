@@ -1,0 +1,12 @@
+instrumentation
+
+//event enter at _ .FunctionDecl creates gen-enter from extract-function
+//event enter at _ .FunctionDecl creates gen-enter from extract-function
+
+event enter at StrategyDef._ creates gen-enter from extract-strategy-debug-info
+//event enter at RuleDef._ creates gen-enter from extract-rule-debug-info
+//event exit at StrategyDef._ creates gen-exit from extract-strategy-debug-info
+//event exit at RuleDef._ creates gen-exit from extract-rule-debug-info
+//event step at Strategy._ creates gen-step from extract-step-debug-info
+
+//event step at Strategy.Fail creates gen-step from extraxt

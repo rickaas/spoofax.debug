@@ -1,0 +1,9 @@
+instrumentation
+
+event enter at _.FunctionDecl 
+			creates gen-func-enter
+			from extract-function-debug-info
+event step  at Statement._
+		    creates gen-stat-step
+		    from extract-statement-debug-info
+		    

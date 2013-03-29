@@ -1,0 +1,21 @@
+module libdsldi/logging/logging
+
+imports
+    libstrategolib
+
+strategies
+
+	log-info(|m) = 
+	    log(|Info(), m, <id>)
+    log-info-msg(|m) = 
+        log(|Info(), m)
+	
+	
+	dbg-msg(|msg : String) =
+	    log(|Debug(), msg)
+	
+	   
+	log-vomit(|m) =
+	   log(|Vomit(), m, <id>)
+    log-vomit-msg(|m) =
+       log(|Vomit(), m)

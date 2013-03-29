@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- some ant snippets -->
+<!-- <project name="build.override"> -->
+<foo>
+  <!-- Target to create -Permissive grammar and parse table for Stratego-Sdf2.def -->
+  <available file="include/Stratego-Sdf2.tbl" property="stratego-sdf2.available" />
+  <target name="meta-sdf2table-stratego-sdf2" unless="stratego-sdf2.available">
+    <fail unless="eclipse.spoofaximp.jars" message="Property eclipse.spoofaximp.jars must point to the directory containing StrategoMix.def" />
+    <antcall target="pack-sdf.helper">
+      <param name="syntax" value="${lib}" />
+      <param name="sdfmodule" value="Stratego-Sdf2" />
+      <param name="build.sdf.imports" value="-Idef &quot;${eclipse.spoofaximp.jars}/StrategoMix.def&quot; ${build.sdf.imports}" />
+    </antcall>
+    <antcall target="sdf2table">
+      <param name="sdfmodule" value="Stratego-Sdf2" />
+    </antcall>
+    <antcall target="meta-sdf2table.helper" />
+  </target>
+
+  <!-- Target to create -Permissive grammar and parse table for Stratego-EditorService.def -->
+  <available file="include/Stratego-EditorService.tbl" property="stratego-esv.available" />
+  <target name="meta-sdf2table-stratego-esv" unless="stratego-esv.available">
+    <fail unless="eclipse.spoofaximp.jars" message="Property eclipse.spoofaximp.jars must point to the directory containing StrategoMix.def" />
+    <antcall target="pack-sdf.helper">
+      <param name="syntax" value="${lib}" />
+      <param name="sdfmodule" value="Stratego-EditorService" />
+      <param name="build.sdf.imports" value="-Idef &quot;${lib}/EditorService.def&quot; -Idef &quot;${eclipse.spoofaximp.jars}/StrategoMix.def&quot; ${build.sdf.imports}" />
+    </antcall>
+    <antcall target="sdf2table">
+      <param name="sdfmodule" value="Stratego-EditorService" />
+    </antcall>
+    <antcall target="meta-sdf2table.helper" />
+  </target>
+
+  <!-- Target to create -Permissive grammar and parse table for StrategoStratego.def -->
+  <available file="include/StrategoStratego.tbl" property="strategostratego.available" />
+  <target name="meta-sdf2table-strategostratego" unless="strategostratego.available">
+    <fail unless="eclipse.spoofaximp.jars" message="Property eclipse.spoofaximp.jars must point to the directory containing StrategoMix.def" />
+    <antcall target="pack-sdf.helper">
+      <param name="syntax" value="${lib}" />
+      <param name="sdfmodule" value="StrategoStratego" />
+      <param name="build.sdf.imports" value="-Idef &quot;${lib}/Stratego-Attributes.def&quot; -Idef &quot;${eclipse.spoofaximp.jars}/StrategoMix.def&quot; ${build.sdf.imports}" />
+    </antcall>
+    <antcall target="sdf2table">
+      <param name="sdfmodule" value="StrategoStratego" />
+    </antcall>
+    <antcall target="meta-sdf2table.helper" />
+  </target>
+
+  <!-- Target to create EditorService-pretty.pp.af from EditorService-pretty.pp -->
+  <available file="include/EditorService-pretty.pp.af" property="pppack-esv.available" />
+  <target name="pppack-esv" unless="pppack-esv.available">
+    <java classname="run" failonerror="true">
+      <arg value="org.strategoxt.tools.main-parse-pp-table"/>
+      <arg value="-i"/>
+      <arg value="${lib}/EditorService-pretty.pp"/>
+      <arg value="-o"/>
+      <arg value="${include}/EditorService-pretty.pp.af"/>
+    </java>
+  </target>
+
+
+    <!--
+    
+    stratego.jar
+    
+    -->
+
+    <!-- Stratego to Java compiler -->
+    <target name="stratego.jar" depends="rtg2sig,utils-files">
+        <!-- The dependset task compares a set of sources with a set of target files. 
+        If any of the sources has been modified more recently than any of the target files, 
+        all of the target files are removed. -->
+        <dependset>
+            <srcfileset dir="${basedir}">
+                <include name="**/*.str"/>
+                <include name="**/*.astr"/>
+                <exclude name="lib/*.generated.str"/>
+            </srcfileset>
+            <!-- if any of the stratego files are new, then remove the generated java files -->
+            <targetfileset file="${src-gen}/{build.stratego.library.location}/Main.java"/>
+        </dependset>
+        <available file="${src-gen}/{build.stratego.library.location}/Main.java" property="strc-java.available"/>
+        <antcall target="copy-jar"/>
+        <antcall target="stratego.jar.deletehelper"/>
+        <antcall target="stratego.jvm.helper">
+            <param name="build.stratego.outputfile" value="${src-gen}/${build.stratego.library.location}/Main.java"/>
+            <param name="build.stratego.extraargs" value="-la java-front ${java.jar.import}"/>
+        </antcall>
+        <!--<javac classpath="utils/strategoxt.jar:${src-gen}${externaljarimport1}${externaljarimport2}${java.jar.classpath}" srcdir="${src-gen}" includes="trans/**" destdir="${build}" source="1.5" target="1.5" debug="on"/>-->
+        <!-- deleting the classfiles before compiling-->
+        <delete>
+            <fileset dir="${build}" includes="${build.stratego.library.location}/**" />
+        </delete>
+        <javac classpath="utils/strategoxt.jar:${src-gen}${externaljarimport1}${externaljarimport2}${java.jar.classpath}" srcdir="${src-gen}" includes="${build.stratego.library.location}/**" destdir="${build}" source="1.5" target="1.5" debug="on"/>
+        <!-- copy generated rtree to include/libdsldi.rtree -->
+        <copy file="${src-gen}/${build.stratego.library.location}/Main.rtree" tofile="${include}/lib${strmodule}.rtree"/>
+        <!-- copy imported terms -->
+        <copy todir="${build}/trans">
+            <fileset dir="${src-gen}/${build.stratego.library.location}" excludes="**/*.java"/>
+        </copy>
+        <jar basedir="${build}" includes="${build.stratego.library.location}/**" destfile="${include}/${strmodule}.tmp.jar"/>
+        <move file="${include}/${strmodule}.tmp.jar" tofile="${include}/${strmodule}.jar"/>
+        <!-- Delete the class files of the stratego code -->
+        <delete><fileset dir="${build}" includes="${build.stratego.library.location}/**"/></delete>
+    </target>
+    
+  <!-- Targets to create libtemplatelang.{jar,rtree} -->
+  <!-- Stratego to Java compiler -->
+  <target name="libtemplatelang.stratego.jar" depends="rtg2sig,utils-files">
+      <dependset>
+          <srcfileset dir="${basedir}/trans/templatelang">
+              <include name="**/*.str"/>
+          </srcfileset>
+          <targetfileset file="${src-gen}/org/strategoxt/imp/editors/template/generated/Main.java"/>
+      </dependset>
+      <available file="${src-gen}/org/strategoxt/imp/editors/template/generated/Main.java" property="libtemplatelang.strc-java.available"/>
+      <antcall target="libtemplatelang.stratego.jar.deletehelper"/>
+      <antcall target="libtemplatelang.stratego.jvm.helper">
+          <param name="build.stratego.outputfile" value="${src-gen}/org/strategoxt/imp/editors/template/generated/Main.java"/>
+          <param name="build.stratego.extraargs" value="-la java-front ${java.jar.import}"/>
+      </antcall>
+      <javac classpath="utils/strategoxt.jar:${src-gen}${externaljarimport1}${externaljarimport2}${java.jar.classpath}" srcdir="${src-gen}" includes="org/strategoxt/imp/editors/template/generated/**" destdir="${build}" source="1.5" target="1.5" debug="on"/>
+      <copy file="${src-gen}/org/strategoxt/imp/editors/template/generated/Main.rtree" tofile="${include}/lib${strmodule}.rtree"/>
+      <!-- copy imported terms -->
+      <copy todir="${build}/org/strategoxt/imp/editors/template/generated">
+          <fileset dir="${src-gen}/org/strategoxt/imp/editors/template/generated" excludes="**/*.java"/>
+      </copy>
+      <jar basedir="${build}" includes="org/strategoxt/imp/editors/template/generated/**" destfile="${include}/lib${strmodule}.tmp.jar"/>
+      <move file="${include}/lib${strmodule}.tmp.jar" tofile="${include}/lib${strmodule}.jar"/>
+      <delete><fileset dir="${build}" includes="org/strategoxt/imp/editors/template/generated/**"/></delete>
+  </target>
+
+
+    <!--
+    
+    stratego.jar.deletehelper
+    
+    -->
+
+    <!-- clean src and bin dir from the files generated from stratego sources -->
+    <target name="stratego.jar.deletehelper" unless="strc-java.available">
+        <delete>
+            <fileset dir="${src-gen}" includes="${build.stratego.library.location}/**"/>
+            <fileset dir="${build}" includes="${build.stratego.library.location}/**"/>
+        </delete>
+    </target>
+    
+  <target name="libtemplatelang.stratego.jar.deletehelper" unless="libtemplatelang.strc-java.available">
+      <delete>
+          <fileset dir="${src-gen}" includes="org/strategoxt/imp/editors/template/generated/**"/>
+          <fileset dir="${build}" includes="org/strategoxt/imp/editors/template/generated/**"/>
+      </delete>
+  </target>
+
+    <!--
+    
+    stratego.jvm.helper
+    
+    -->
+    
+    <target name="stratego.jvm.helper" unless="strc-java.available" if="build.stratego.enabled">
+        <delete file="${include}/${strmodule}.rtree" failonerror="false"/>
+        <!-- Create subdirectory that matches package-name -->
+        <mkdir dir="${src-gen}/${build.stratego.library.location}" />
+        <java classname="org.strategoxt.strj.Main" failonerror="true">
+            <arg value="-i"/>
+            <arg value="${trans}/${strmodule}.str"/>
+            <arg value="-o"/>
+            <arg value="${build.stratego.outputfile}"/>
+            <arg value="-p"/>
+            <arg value="${build.stratego.library.name}"/> <!-- used to be "trans" but we want a custom package name -->
+            <arg value="--library"/>
+            <arg value="--clean"/>
+            <arg line="${build.stratego.args}"/>
+            <arg line="${build.stratego.extraargs}"/>
+            <arg line="${externaljarflags}"/>
+            <arg line="${externaldefimport}"/>
+            <arg line="-I &quot;${lib}&quot; -I &quot;${include}&quot; --cache-dir &quot;${basedir}/.cache&quot;"/>
+        </java>
+        <delete file="${include}/${strmodule}.rtree" failonerror="false"/>
+        <!-- <mkdir dir="${build}/trans" /> -->
+    </target>
+
+  <target name="libtemplatelang.stratego.jvm.helper" unless="libtemplatelang.strc-java.available" if="build.stratego.enabled">
+      <java classname="org.strategoxt.strj.Main" failonerror="true">
+          <arg value="-i"/>
+          <arg value="${trans}/templatelang/main.str"/>
+          <arg value="-o"/>
+          <arg value="${build.stratego.outputfile}"/>
+          <arg value="-p"/>
+          <arg value="org.strategoxt.imp.editors.template.generated"/>
+          <arg value="--library"/>
+          <arg value="--clean"/>
+          <arg line="${build.stratego.args}"/>
+          <arg line="${build.stratego.extraargs}"/>
+          <arg line="${externaljarflags}"/>
+          <arg line="${externaldefimport}"/>
+          <arg line="-I &quot;${lib}&quot; -I &quot;${include}&quot; --cache-dir &quot;${basedir}/.cache&quot;"/>
+      </java>
+      <mkdir dir="${build}/org/strategoxt/imp/editors/template/generated"/>
+  </target>
+
+
+    <!--
+    
+    java.jar
+    
+    -->
+
+    <!-- Compile the native java strategies to a jar -->
+    <target name="java.jar" if="java.jar.enabled">
+        <delete>
+            <fileset dir="${build}" includes="${build.stratego.external.name}/**" />
+        </delete>
+        <javac classpath="utils/strategoxt.jar:${src-gen}${externaljarimport}${java.jar.classpath}" classpathref="plugin.dependencies.classpath" srcdir="${src-gen}" includes="${build.stratego.external.name}/**" destdir="${build}" source="1.5" target="1.5" debug="on" />
+        <jar basedir="${build}" includes="${build.stratego.external.name}/**" update="no" destfile="${include}/${strmodule}-java.jar" />
+        <!-- original -->
+        <!-- <jar basedir="${build}" excludes="trans/**" update="true" destfile="${include}/${strmodule}-java.jar"/> -->
+    </target>
+    
+	<!-- 
+	
+	clean 
+	
+	-->
+	
+    <target name="clean" description="clean up">
+        <delete dir="${build}"/>
+        <delete file="${include}/${sdfmodule}.def"/>
+        <delete dir="${src-gen}/trans"/>
+    </target>
+    
+    <!--
+    
+    Stuff for compiling stratego with debug information
+    
+    -->
+    
+    <!-- Stratego to Java compiler with debugging capabilities -->
+    <target name="stratego.jar.debug" depends="rtg2sig,utils-files-debug">
+        <dependset>
+            <srcfileset dir="${basedir}">
+                <include name="**/*.str"/>
+                <include name="**/*.astr"/>
+                <exclude name="lib/editor-common.generated.str"/>
+            </srcfileset>
+            <targetfileset file="${src-gen}/trans/Main.java"/>
+        </dependset>
+        <available file="${src-gen}/trans/Main.java" property="strc-java.available"/>
+        <antcall target="copy-jar"/>
+        <antcall target="stratego.jar.deletehelper"/>
+        <!-- compile stratego to java -->
+        <antcall target="stratego.jvm.helper.debug">
+            <param name="build.stratego.outputfile" value="${src-gen}/trans/Main.java"/>
+            <param name="build.stratego.extraargs" value="-la java-front ${java.jar.import}"/>
+        </antcall>
+        <!-- compile java to class -->
+        <javac destdir="${build}" source="1.5" target="1.5" debug="on">
+            <!-- attribute in javac: srcdir="${src-gen}" -->
+            <src path="${src-gen}"/>
+            <!-- attribute in javac: classpath="utils/strategoxt.jar:${src-gen}${externaljarimport1}${externaljarimport2}${java.jar.classpath}"  -->
+            <classpath>
+                <pathelement path="utils/strategoxt.jar:${src-gen}${externaljarimport1}${externaljarimport2}${java.jar.classpath}"/>
+                <!-- the path attribute accepts colon- or semicolon-separated lists of locations -->
+                <pathelement location="utils/stratego-debug-runtime.jar"/>
+                <!-- The location attribute specifies a single file or directory relative to the project's base directory (or an absolute filename) -->
+                <pathelement location="utils/stratego-debug-runtime-java.jar"/>
+            </classpath>
+            <!-- attribute in javac: includes="trans/**"  -->
+            <include name="trans/**"/>
+        </javac>
+        <!-- copy imported terms -->
+        <copy todir="${build}/trans">
+            <fileset dir="${src-gen}/trans" excludes="**/*.java"/>
+        </copy>
+        <!-- create a jar from the class files -->
+        <jar basedir="${build}" includes="trans/**" destfile="${include}/${strmodule}.tmp.jar"/>
+        <move file="${include}/${strmodule}.tmp.jar" tofile="${include}/${strmodule}.jar"/>
+        <delete>
+            <fileset dir="${build}" includes="trans/**"/>
+        </delete>
+    </target>
+
+    <!-- instrument the stratego program and compile it to java -->
+    <target name="stratego.jvm.helper.debug" unless="strc-java.available" if="build.stratego.enabled">
+        <echo message="generate stratego with debug information"/>
+        <echo message="${basedir}"/>
+        <available classname="org.strategoxt.imp.debug.stratego.transformer.trans.Main" property="transformer.available"/>
+        <!-- add debug information -->
+        <java classname="org.strategoxt.imp.debug.stratego.transformer.trans.Main" failonerror="true" fork="true">
+            <classpath>
+                <pathelement location="${eclipse.spoofaximp.stratego-transformer-jar}"/>
+                <pathelement location="${eclipse.spoofaximp.stratego-transformer-java-jar}"/>
+                <pathelement location="${eclipse.spoofaximp.strategojar}"/>
+            </classpath>
+            <arg value="-i"/>
+            <arg value="${trans}/${strmodule}.str"/>
+            <arg value="--gen-dir"/>
+            <arg value="${trans-debug}"/>
+            <arg value="--base-dir"/>
+            <!-- set the basedir to the project dir -->
+            <arg value="${basedir}"/>
+            <!-- "arg line='val'" val should contain space-separated arguments -->
+            <arg line="--charoffset-converter --fail-catch ${transformer-output}"/>
+
+            <!-- arguments should start with two '-'-characters -->
+            <!-- <arg value="-charoffset-converter"/> -->
+            <!-- create charoffset table -->
+            <!-- <arg value="-fail-catch"/>  -->
+            <!-- catch failures in where/with-clauses in rules -->
+            <!-- <arg value="-output-rtree"/> -->
+        </java>
+        <!-- now compile instrumented stratego to java -->
+        <delete file="${include}/${strmodule}.rtree" failonerror="false"/>
+        <java classname="org.strategoxt.strj.Main" failonerror="true">
+            <arg value="-i"/>
+            <arg value="${trans-debug}/trans/${strmodule}.${strj.input.file.type}"/>
+            <arg value="-o"/>
+            <arg value="${build.stratego.outputfile}"/>
+            <arg value="-p"/>
+            <arg value="trans"/>
+            <arg value="--library"/>
+            <arg value="--clean"/>
+            <arg line="${build.stratego.args}"/>
+            <arg line="${build.stratego.extraargs}"/>
+            <arg line="${externaljarflags}"/>
+            <arg line="${externaldefimport}"/>
+            <arg line="-I &quot;${lib}&quot; -I &quot;${include}&quot; --cache-dir &quot;${basedir}/.cache&quot;"/>
+            <!-- put strategodebuglib.rtree on the include path -->
+            <arg line="-I &quot;${eclipse.spoofaximp.strategodebuglib-folder}&quot;"/>
+            <arg line="-la org.strategoxt.imp.debug.stratego.runtime.trans"/>
+        </java>
+        <delete file="${include}/${strmodule}.rtree" failonerror="false"/>
+        <mkdir dir="${build}/trans"/>
+    </target>
+</foo>
+<!-- </project> -->

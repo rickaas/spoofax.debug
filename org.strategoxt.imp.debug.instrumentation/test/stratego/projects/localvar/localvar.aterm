@@ -1,0 +1,296 @@
+Module(
+  "localvar"
+, [ Imports([Import("libstrategolib")])
+  , Signature(
+      [ Sorts([SortNoArgs("Prop")])
+      , Constructors(
+          [ OpDecl(
+              "Var"
+            , FunType([ConstType(SortNoArgs("String"))], ConstType(SortNoArgs("Expression")))
+            )
+          , OpDecl(
+              "Number"
+            , FunType([ConstType(SortNoArgs("Int"))], ConstType(SortNoArgs("Expression")))
+            )
+          , OpDecl(
+              "Add"
+            , FunType(
+                [ConstType(SortNoArgs("Expression")), ConstType(SortNoArgs("Expression"))]
+              , ConstType(SortNoArgs("Expression"))
+              )
+            )
+          , OpDecl(
+              "Sub"
+            , FunType(
+                [ConstType(SortNoArgs("Expression")), ConstType(SortNoArgs("Expression"))]
+              , ConstType(SortNoArgs("Expression"))
+              )
+            )
+          , OpDecl(
+              "Print"
+            , FunType([ConstType(SortNoArgs("Expression"))], ConstType(SortNoArgs("Statement")))
+            )
+          , OpDecl(
+              "Assign"
+            , FunType(
+                [ConstType(SortNoArgs("String")), ConstType(SortNoArgs("Expression"))]
+              , ConstType(SortNoArgs("Statement"))
+              )
+            )
+          , OpDecl(
+              "Function"
+            , FunType(
+                [ConstType(SortNoArgs("String")), ConstType(Sort("List", [SortNoArgs("Statement")]))]
+              , ConstType(SortNoArgs("Definition"))
+              )
+            )
+          , OpDecl(
+              "Comment"
+            , FunType(
+                [ConstType(SortNoArgs("String")), ConstType(SortNoArgs("String"))]
+              , ConstType(SortNoArgs("Definition"))
+              )
+            )
+          , OpDecl(
+              "Program"
+            , FunType(
+                [ConstType(SortNoArgs("String")), ConstType(Sort("List", [SortNoArgs("Definition")]))]
+              , ConstType(SortNoArgs("Program"))
+              )
+            )
+          ]
+        )
+      ]
+    )
+  , Strategies(
+      [SDefNoArgs(
+         "main"
+       , Call(SVar("io-wrap"), [CallNoArgs(SVar("execute"))])
+       )]
+    )
+  , Rules(
+      [ RDefNoArgs(
+          "execute"
+        , Rule(
+            Var("input")
+          , Var("output")
+          , [ WithClause(
+                Assign(
+                  Var("output")
+                , App(CallNoArgs(SVar("match-comments")), Var("input"))
+                )
+              )
+            ]
+          )
+        )
+      ]
+    )
+  , Rules(
+      [ RDefNoArgs(
+          "match-comments"
+        , Rule(
+            NoAnnoList(Op("Program", [Wld(), Var(ListVar("definitions*"))]))
+          , Var("out")
+          , [ WithClause(
+                Seq(
+                  Assign(
+                    Var(ListVar("f*"))
+                  , App(CallNoArgs(SVar("find-functions")), Var(ListVar("definitions*")))
+                  )
+                , Seq(
+                    Assign(
+                      Var(ListVar("c*"))
+                    , App(CallNoArgs(SVar("find-comments")), Var(ListVar("definitions*")))
+                    )
+                  , Assign(
+                      Var("out")
+                    , App(
+                        CallNoArgs(SVar("match-f-and-c"))
+                      , NoAnnoList(
+                          Tuple([Var(ListVar("f*")), Var(ListVar("c*"))])
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+            ]
+          )
+        )
+      , RDefNoArgs(
+          "find-functions"
+        , Rule(
+            Var(ListVar("definition*"))
+          , Var(ListVar("functions*"))
+          , [ WithClause(
+                Assign(
+                  Var(ListVar("functions*"))
+                , App(
+                    Call(
+                      SVar("filter")
+                    , [Match(NoAnnoList(Op("Function", [Wld(), Wld()])))]
+                    )
+                  , Var(ListVar("definition*"))
+                  )
+                )
+              )
+            ]
+          )
+        )
+      , RDefNoArgs(
+          "find-comments"
+        , Rule(
+            Var(ListVar("definition*"))
+          , Var(ListVar("comments*"))
+          , [ WithClause(
+                Assign(
+                  Var(ListVar("comments*"))
+                , App(
+                    Call(
+                      SVar("filter")
+                    , [Match(NoAnnoList(Op("Comment", [Wld(), Wld()])))]
+                    )
+                  , Var(ListVar("definition*"))
+                  )
+                )
+              )
+            ]
+          )
+        )
+      , RDefNoArgs(
+          "match-f-and-c"
+        , Rule(
+            NoAnnoList(
+              Tuple([Var(ListVar("f*")), Var(ListVar("c*"))])
+            )
+          , Var(ListVar("matches*"))
+          , [ WithClause(
+                Assign(
+                  Var(ListVar("matches*"))
+                , App(
+                    Call(
+                      SVar("map")
+                    , [CallT(SVar("try-find-comment-by-name"), [], [Var(ListVar("c*"))])]
+                    )
+                  , Var(ListVar("f*"))
+                  )
+                )
+              )
+            ]
+          )
+        )
+      , SDefT(
+          "try-find-comment-by-name"
+        , []
+        , [DefaultVarDec(ListVar("c*"))]
+        , CallT(SVar("find-comment-match"), [], [Var(ListVar("c*"))])
+        )
+      , RDefT(
+          "find-comment-match"
+        , []
+        , [DefaultVarDec(ListVar("c*"))]
+        , Rule(
+            Var("f")
+          , NoAnnoList(Tuple([Var("f"), Var("c")]))
+          , Seq(
+              Assign(
+                Var("name")
+              , App(CallNoArgs(SVar("get-function-name")), Var("f"))
+              )
+            , Assign(
+                Var("c")
+              , App(
+                  CallT(SVar("find-comment-by-name"), [], [Var("name")])
+                , Var(ListVar("c*"))
+                )
+              )
+            )
+          )
+        )
+      , RDefNoArgs(
+          "get-function-name"
+        , RuleNoCond(
+            NoAnnoList(Op("Function", [Var("name"), Wld()]))
+          , Var("name")
+          )
+        )
+      , RDefT(
+          "find-comment-by-name"
+        , []
+        , [DefaultVarDec("name")]
+        , Rule(
+            Var(ListVar("c*"))
+          , Var("comment")
+          , [ WithClause(
+                Seq(
+                  Assign(
+                    Var(ListVar("c-filtered*"))
+                  , App(
+                      Call(
+                        SVar("filter")
+                      , [Match(NoAnnoList(Op("Comment", [Var("name"), Wld()])))]
+                      )
+                    , Var(ListVar("c*"))
+                    )
+                  )
+                , Assign(
+                    Var("comment")
+                  , NoAnnoList(
+                      Tuple(
+                        [ App(
+                            Seq(
+                              Call(SVar("debug"), [Build(NoAnnoList(Str("\"stuff:\"")))])
+                            , CallNoArgs(SVar("first"))
+                            )
+                          , Var(ListVar("c-filtered*"))
+                          )
+                        ]
+                      )
+                    )
+                  )
+                )
+              )
+            ]
+          )
+        )
+      , RDefNoArgs(
+          "old-first"
+        , Rule(
+            Var(ListVar("c-list*"))
+          , Var("out")
+          , LChoice(
+              Assign(
+                Var("out")
+              , App(CallNoArgs(SVar("last")), Var(ListVar("c-list*")))
+              )
+            , CallNoArgs(SVar("build-c"))
+            )
+          )
+        )
+      , SDefNoArgs("is-empty", Match(NoAnnoList(List([]))))
+      , SDefNoArgs(
+          "first"
+        , Seq(
+            Call(SVar("debug"), [Build(NoAnnoList(Str("\"first: \"")))])
+          , GuardedLChoice(
+              CallNoArgs(SVar("is-empty"))
+            , CallNoArgs(SVar("build-c"))
+            , CallNoArgs(SVar("last"))
+            )
+          )
+        )
+      , SDefNoArgs(
+          "build-c"
+        , Build(
+            NoAnnoList(
+              Op(
+                "Comment"
+              , [NoAnnoList(Str("\"new\"")), NoAnnoList(Str("\"created!!\""))]
+              )
+            )
+          )
+        )
+      ]
+    )
+  ]
+)

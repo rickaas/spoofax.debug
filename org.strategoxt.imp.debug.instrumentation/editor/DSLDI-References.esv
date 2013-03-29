@@ -1,0 +1,15 @@
+module DSLDI-References
+
+imports DSLDI-References.generated
+
+references
+                                                                                                   
+  // This file can be used to specify reference resolving and hover help, and content completion.  
+  //                                                                                               
+  // See the imported file for a brief introduction and examples.                                  
+                                                                                                   
+
+references
+// TODO: maybe use editor resolve to go to the strategies that are used as extraction or generation transformation
+//  reference _ : editor-resolve
+//  hover _     : editor-hover

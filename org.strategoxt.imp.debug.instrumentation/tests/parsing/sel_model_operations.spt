@@ -1,0 +1,44 @@
+module sel_model_operations
+
+language DSLDI
+
+test sel definition operators [[
+    instrumentation
+]] run get-sel-links-as-list to []
+
+test sel definition operators [[
+    
+instrumentation
+
+event enter at StrategyDef._ creates gen-enter from extract-strategy-debug-info
+
+]] run get-sel-links-as-list to 
+    [ Link(
+        Enter()
+      , SortAndConstructor(Sort("StrategyDef"), Empty())
+      , StrategyRef("gen-enter")
+      , StrategyRef("extract-strategy-debug-info")
+      )
+    ]
+
+test sel definition operators
+  <parse-file> "./test/testdata/example.sel" 
+  ; get-sel-links-as-list; map(get-event-type) => [Enter]
+
+test sel definition operators
+  <parse-file> "./test/testdata/example.sel" 
+  ; get-sel-links-as-list; map(get-syntax-pattern) => [SortAndConstructor(Sort("StrategyDef"),Empty)]
+    
+test sel definition operators
+  <parse-file> "./test/testdata/example.sel" 
+  ; get-sel-links-as-list; map(get-gen-transformation) => ["gen-enter"]
+    
+test sel definition operators
+  <parse-file> "./test/testdata/example.sel" 
+  ; get-sel-links-as-list; map(get-extract-transformation) => ["extract-strategy-debug-info"]
+
+/*
+test tiny_1 parse
+    <parse-dsldi-file> "./test/testdata/tiny_1.sel"
+    ; get-sel-links-as-list; map(get-extract-transformation) => ["extract-strategy-debug-info"]
+*/

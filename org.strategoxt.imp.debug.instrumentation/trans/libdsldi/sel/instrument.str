@@ -1,0 +1,373 @@
+module libdsldi/sel/instrument
+/*
+Language independent instrumentation.
+
+First find files with the specified extension by recursively walking over the --input-directory.
+Parse each file with a DSL-specific parse function and return an ATerm.
+Instrument the DSL-file
+    Traverse over the ATerm and try to match the SEL-pattern.
+    When a pattern is matched perform the extract and generate transformations. These transformations are DSL-specific.
+    Update the DSL-ATerm
+    Write back the result to the --output-directory
+*/
+imports
+	libdsldi/sel/options
+	
+imports
+  libstratego-lib
+  libstratego-sglr
+  libstratego-gpp
+  
+imports
+	include/DSLDI // syntax
+	libdsldi/sel/links // strategies to operate on SEL-Aterm
+	libdsldi/sel/dynamic-call // strategies to call transformations defined in SEL
+	libdsldi/utils
+	libdsldi/logging/logging // logging
+	libdsldi/sel/program-metadata // DSL Program metadata
+	libdsldi/sel/dsl-io
+	libdsldi/sel/result-reporting // util to report succes or failure
+	libdsldi/utils
+	
+// DSL specific import
+//imports
+//	stratego/sel-stratego
+strategies
+
+	execute-wrap = 
+		//java-monitor-start(|"execute"); 
+		execute 
+		//; java-monitor-end(|"execute"); java-monitor-end(|"main"); java-timer-print
+
+    pre-init =
+        if get-runtime-report then
+            location := <get-runtime-report>
+            ; (java-list-runtime-properties; map(write-to-string); separate-by(|"\n"); concat-strings => contents
+                ; write-to-file(|location, contents)
+                <+ <err(|"Could not runtime-properties report to:")> location
+              )
+        end
+    init-enable-tracking =
+        <dbg-msg(|"Enabling origin tracking... ")> ""
+        ; <dbg-msg(|"Enable origins")> ""
+        ; prim("SSL_EXT_enable_origins")
+        ; <dbg-msg(|"Enable desugared origins")> ""
+        ; prim("SSL_EXT_enable_desugared_origins", 1)
+
+    // init-sel-transformations should already be invoked
+	// current term is not used
+	execute = id
+	    ; pre-init
+		; <dbg-msg(|"Start execute ")> ""
+		; init-enable-tracking
+		// SEL definition can already be initialized, but we allow it to be overridden from the command line using --sel
+		; if get-config-sel then
+		    log-info-msg(|"SEL definition is overridden") ;
+            (load-sel-def <+ <err-msg(|"Failed to load SEL definition")> "")
+          end
+          // GET-SEL-DEFINITION needs to be valid by now...
+        ; if not(GET-SEL-DEFINITION) then <err-msg(|"No SEL definition configured, use --sel option to point to a SEL definition")> ""; fail end
+        ; init-basepath
+        ; if not(or(get-config-output-dir, get-config-is-pipe)) then
+              // no output format specified
+              err-msg(|"No output format specified, use --output-dir or --pipe")
+              ; fail
+          end
+		; if get-config-output-dir then
+		      <dbg-msg(|"Write result to disk")> ""
+		      ; output-basepath := <get-config-output-dir> // generated files will end up in this folder
+		      ; log-info(|"Output directory: ")
+		      ; <SET-OUTPUT-BASEPATH> output-basepath
+		  end
+		; if and(get-config-is-pipe,not(get-config-single-input-file)) then
+		      // --pipe only support when analyzing a single file (RL: at least for now)
+		      <err-msg(|"Piping result to stdout is only supported in combination with --input-file")> ""
+		      ; fail
+		  end
+		; source-files := <get-targeted-source-files>
+		; <SET-SOURCE-FILES> source-files
+		; log-info(|"These files will be instrumented: ")
+		; if not(get-config-is-fake-run) then
+		     !source-files ; dsldi-log-timed(main-instrument|"Total Instrumentation duration", Info())
+		     //<instrument-files> source-files
+		  else
+		      <SET-INSTRUMENTATION-SUMMARY> []
+		  end
+		  // What will the program return?
+		; report-instrumentation
+		  // Either an ATerm representation of a single instrumented file or a list with the instrumented files
+		; if and(get-config-is-pipe, get-config-single-input-file) then
+            <dbg-msg(|"Piping result to stdout...")> ""
+            ; GET-DSL-PROGRAM-SOURCE
+          end
+          
+    main-instrument = GET-SOURCE-FILES; instrument-files
+    
+    load-sel-def = id
+        ; <log-vomit(|"Trying to load SEL definition")> ""
+        ; (get-config-sel <+ (<err-msg(|"Missing --sel option")> ""; fail))
+        ; ?sel-filename
+        ; log-info(|"loading SEL definition from: ")
+        ; sel-definition := <read-dsldi-file> sel-filename // parse the sel definition
+        ; <dbg-msg(|"loaded SEL definition ")> ""
+        // set global variables:
+        ; <SET-SEL-DEFINITION> sel-definition
+
+    init-basepath = id
+          // the main directory of the dsl program, file locations in debug events will be relative to this directory
+        ; dsl-program-basepath := <get-config-input-dir> 
+        ; log-info(|"Input directory: ")
+        ; <SET-DSL-PROGRAM-BASEPATH> dsl-program-basepath <+ (<err-msg(|"--input-dir option is required")> ""; fail)
+
+    /**
+     *
+     * returns the list of files that will be instrumented
+     */
+    get-targeted-source-files =
+        if get-config-single-input-file then
+            ![<get-config-single-input-file>]
+        else
+            // traverse the --input-dir and collect all files that end with the given extensions
+            extensions := <get-config-file-extension>
+            ; <log-info(|"transform files with extensions: ")> extensions
+            // search the DSL-PROGRAM-BASEPATH to find all files that need to be transformed
+            ; <get-dsl-program-files> (<GET-DSL-PROGRAM-BASEPATH>, extensions)
+        end
+    
+
+	/*
+	* Current term is a list of strings, each string points to a file that will be instrumented.
+	* Returns a list of terms, each item in de list is Success or Failure term and corresponds to an instrumented file.
+	*/
+	instrument-files =
+		?dsl-program-files
+		// now instrument each file
+	    ; number-of-files := <length> dsl-program-files
+		; <log-info-msg(|<separate-by(|" ") ; concat-strings>["Instrumenting", <write-to-string>number-of-files, "files."])> ""
+		; <SET-TOTAL-WORKUNITS> number-of-files
+		; <SET-WORKUNIT-PROGRESS> 0
+		; result := <map(dsldi-log-timed(instrument-file|"File instrumentation", Notice()))> dsl-program-files
+		; SET-INSTRUMENTATION-SUMMARY
+
+	// current term is the relative location of a DSL program.
+	// The path is relative to DSL-PROGRAM-BASEPATH
+	// Returns Success(filename) or Failure(errorMessage) term
+	instrument-file = 
+		//; output-basepath := <get-output-basepath>
+		//; dsl-program-basepath := <get-dsl-basepath> // the main directory of the dsl program
+		//; dsl-program-abs-location := <get-dsl-filename>
+		if is-abspath then
+			?abs-path 
+			; (parent-path, filename) := <split-path(|<GET-DSL-PROGRAM-BASEPATH>)> abs-path
+			; ! filename
+			; log-vomit(|"converted to relative filename: ")
+		end
+		; ?dsl-program-filename
+		; next-workunit // update progress
+		; <log-info(|<separate-by(|" ") ; concat-strings>["Instrumenting", <workunit-progress-as-string>, ": "])> dsl-program-filename
+		; <try-parse-and-instrument> dsl-program-filename // tries to parse, if successfull instrument program
+		  
+	// try to parse the file and then instrument
+	try-parse-and-instrument = 
+		?dsl-program-filename // relative to GET-DSL-PROGRAM-BASEPATH
+		// GET-DSL-PROGRAM-BASEPATH is either relative to the current directory or an absolute path
+		; file := <prefix-with(|<GET-DSL-PROGRAM-BASEPATH>)> dsl-program-filename
+		; (dsl-program-aterm := <get-parsed-dsl-program> file 
+			<	// parse succes
+				!(dsl-program-filename, dsl-program-aterm)
+				; try-instrument // als returns ("SUCCESS"/"FAIL", dsl-program-filename)
+			+	// parse fail
+				(!file; err(|"Could not parse: "); !Failure("Could not parse file", file))
+		  )
+		  
+	// try to instrument an ATerm. Current term is (filename, program-aterm)
+	// When 
+	// When instrumenting fails, show message
+	try-instrument = ?(dsl-program-filename, dsl-program-aterm)
+        ; where(!dsl-program-aterm; get-term-origin-location-tuple; SET-TOP-LEVEL-LOCATION)
+		; (instrument-program-aterm 
+		<	// success
+			(
+				instrumented-aterm := <GET-DSL-PROGRAM-SOURCE>
+				// now write the file
+				; output-filename := <concat-strings> [<GET-OUTPUT-BASEPATH>, "/", dsl-program-filename]
+				; (
+				    <write-dsl-program> (output-filename, instrumented-aterm)
+				    <
+				    !Success(dsl-program-filename, output-filename)
+				    +
+				    (<err-msg(|"Failed to write instrumented aterm")> ""
+				    ; !Failure("Failed to write instrumented aterm", dsl-program-filename)
+				    )
+				  )
+			)
+		+	// failed
+			(
+				<err-msg(|"Failed to instrument aterm ")> ""
+				; !Failure("Failed to instrument aterm", dsl-program-filename)
+			)
+		)
+	
+	instrument-program-aterm =
+		?(dsl-program-filename, dsl-program-aterm)
+		; prim("SSL_EXT_enable_desugared_origins", 1) // keep track of origins
+		; dsl-program-aterm' := <prim("SSL_EXT_clone_and_set_parents", dsl-program-aterm)>  // let's see if we now have parents...
+		; <SET-DSL-PROGRAM-FILENAME> dsl-program-filename
+		; <SET-DSL-PROGRAM-SOURCE> dsl-program-aterm'
+		; sel-links := <GET-SEL-DEFINITION; get-sel-links-as-list>
+		; <map(handle-sel-spec)> sel-links // apply each SEL spec definition to the DSL program
+		// DSL-PROGRAM-SOURCE is updated after each handle-sel-spec call
+		  // now do a final sweep
+		; try-post-instrumentation // Will also update DSL-PROGRAM-SOURCE, transformation continues when GET-POST-INSTRUMENTATION-NAME dyn-rule fails
+		; <dbg-msg(|"Finished post-instrumentation")> ""
+		; result := <GET-DSL-PROGRAM-SOURCE>
+		// output instrumented AST
+		; log-vomit(|"INSTRUMENTED: ")
+		// return instrumented ATerm
+		// TODO: maybe return some meta information about the instrumentation...
+
+	// traverses the dsl program to find an aterm that matches the pattern for the current sel-spec
+	//?Link(event-type, syntax-pattern, gen-transformation, extract-transformation)
+	handle-sel-spec = 
+		?link
+		; get-event-type; log-vomit(|"ADDING EVENT: ") 
+		//; <debug(!"SP: ")> syntax-pattern
+		//; <get-syntax-pattern; debug(!"SP: ")> link
+		//; <get-event-type; debug(!"get-event-type: ")> link
+		; GET-DSL-PROGRAM-SOURCE // the dsl program that will be instrumented
+		//; bottomup(handle-syntax-construct(|syntax-pattern))
+		; log-vomit(|"Before instrument        ")
+		; before-instrument
+//		; ext-write-recorded-terms(|<concat-strings> [<get-event-type; ext-get-cons> link, "--", "before"])
+		; log-vomit(|"WILL OPERATE ON: ")
+		//; bottomup(handle-syntax-construct(|link)) // RL: somehow attachment get dropped when replacing a subterm
+		; bottomup(keeps-attachments(handle-syntax-construct(|link))) // ensure attachments stay the same (or at least try to...)
+		; log-vomit(|"After instrument         ")
+		; after-instrument
+//		; ext-write-recorded-terms(|<concat-strings> [<get-event-type; ext-get-cons> link, "--", "after"]) // write trace-information about instrumented term
+		; ?new-ast
+		; <log-vomit(|"REWRITTEN TO: ")> new-ast
+		  // update the DSL-PROGRAM-SOURCE contents it is partialy instrumented
+		; <SET-DSL-PROGRAM-SOURCE> new-ast
+		; !link
+
+	// tries to match the current term against the syntax pattern in in link
+	handle-syntax-construct(|link) = 
+		?term
+		; try(
+			match-term-against-syntax-pattern(|link) // this one could fail
+			; has-been-matched(|link)
+		)
+			
+
+	// current is matched against the pattern in link, now execute the extract and generation transformations specified in link
+	// current-term is term
+	// output is the debug instrumented term
+	has-been-matched(|link) =
+		?term
+		// get the names of the extract and generate strateges
+		; !link
+		// log critical if one of the transformations could not be extracted
+		; (!link; get-extract-transformation <+ err(|"Could not get extract-transformation from link "))
+		; (!link; get-gen-transformation <+ err(|"Could not get gen-transformation from link "))
+		; extract-name := <get-extract-transformation> link
+		; generate-name := <get-gen-transformation> link
+		//; debug(!"We are almost going to instrument! ")
+		; (<instrument-specific-aterm(|extract-name, generate-name)> term 
+		  <+ 
+		  	<err-msg(|"Failed to instrument aterm")> ""
+		  	; <err(|"... Extract transformation:")> extract-name
+		  	; <err(|"... Generate transformation:")> generate-name
+		  	; <log-debug-depth(err(|"... at term:"))> term
+		  	; <log-vomit(|"... more details:")> term
+		  	; if get-config-allow-no-instrumentation-failures then
+	  	        fail
+	  	      else
+		  	    !term // recover from instrumentation error
+		  	  end
+		  )
+		;?generated-term
+		// //; log-trace(|"Succesfully generated term")
+		// // now copy the attachment from the term to the newly instrumented term
+		// // RL: ActionLanguage des copy-attachment
+		// ; !(term, generated-term)
+		// ; (debug(!"Copying attachment: "); copy-attachment <+ debug(!"Failed to copy attachment"))
+		; !generated-term
+		; ext-record-term // save a reference to the instrumented term, (this was only used during development to make sure the terms were the same)
+		   <+ (err-msg(|"Failure in has-been-matched"); if get-config-allow-no-instrumentation-failures then fail end)
+		
+	/*
+	* Executes the extract-transformation defined by extract-name (Replaces the GET-CURRENT-DEBUG-INFORMATION)
+	* and then executes the generation-transformation defined by generate-name.
+	* It returns the debug-instrumented aterm
+	*/
+	instrument-specific-aterm(|extract-name, generate-name) = 
+		?aterm
+		; <try-extract(|extract-name)> aterm
+		; <try-generate(|generate-name)> aterm
+		//; debug(!"INSTRUMENTED: ")
+		<+ fail // extract or generate failed, propagate the failure
+	
+	// current term should be a program-fragment aterm
+	try-extract(|extract-name) = 
+		?aterm;
+		if java-exists-extract-strategy(|extract-name) then
+			//debug ;
+			<java-call-extract-strategy(|extract-name)> aterm // returns DEBUG-INFORMATION
+			; SET-CURRENT-DEBUG-INFORMATION; !aterm
+			<+ failed-extract(|extract-name); fail
+		else 
+			// could not find extract transformation
+			<err(|"Could not find extract transformation: ")> extract-name
+			; fail
+			end
+
+	// current term should be a program-fragment aterm
+	try-generate(|generate-name) = 
+		?aterm;
+		if java-exists-gen-strategy(|generate-name) then
+			//debug ;
+			<java-call-gen-strategy(|generate-name)> aterm
+			<+ failed-generate(|generate-name); fail
+		else 
+			// could not find generate transformation
+			<err(|"Could not find generate transformation: ")> generate-name
+			; fail
+			end
+	
+	// do a final sweep
+    try-post-instrumentation =
+        aterm := <GET-DSL-PROGRAM-SOURCE>
+        ; <dbg-msg(|"Trying to do post-instrumentation... ")> ""
+        ; if not(GET-POST-INSTRUMENTATION-NAME) then
+              // no post instrumentation defined
+              <dbg-msg(|"No post-instrumentation defined")> ""
+          else
+              // post instrumentation defined
+              post-instrumentation-name := <GET-POST-INSTRUMENTATION-NAME>
+              ; <dbg(|"Post-instrumentation using: ")> post-instrumentation-name
+              //; post-ast := <java-invoke-strategy(|post-instrumentation-name)> aterm
+              ; post-ast := <java-call-post-instrumentation-strategy(|post-instrumentation-name)> aterm
+              ; <SET-DSL-PROGRAM-SOURCE> post-ast
+              <+ (<err-msg(|"Post-instrumentation failed")> ""; fail)
+          end
+
+    before-instrument = ?ast
+    // ; collect-all(id; where(ext-get-cons; equal(|"FunctionDeclVoid")), conc)
+    // ; map(
+    //       debug(!"b-f: ");
+    //       where(ext-get-sort;debug(!"b-sort: ") <+ debug(!"b-Could not get sort"));
+    //       where(ext-term-hashcode; debug(!"hashcode: "))
+    //       )
+    // ; !ast
+    
+    after-instrument = ?ast
+    // ; collect-all(id; where(ext-get-cons; equal(|"FunctionDeclVoid")), conc)
+    // ; map(
+    //       debug(!"a-f: ");
+    //       where(ext-get-sort;debug(!"a-sort: ") <+ debug(!"a-Could not get sort"));
+    //       where(ext-term-hashcode; debug(!"hashcode: "))
+    //   )
+    // ; !ast
+      
+      

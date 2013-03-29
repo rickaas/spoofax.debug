@@ -1,0 +1,99 @@
+module localvar
+// use local vars in rules and strategies to store temp result
+// This file is used as test input, do not modify!
+imports
+  libstrategolib
+
+
+signature
+  sorts
+    Prop
+
+  constructors
+  	
+  	Var		: String -> Expression
+  	Number	: Int -> Expression
+  	Add		: Expression * Expression -> Expression
+  	Sub		: Expression * Expression -> Expression
+  	
+  	Print	: Expression -> Statement
+  	Assign	: String * Expression -> Statement
+  	
+  	Function : String * List(Statement) -> Definition
+  	
+  	Comment : String * String -> Definition
+  	
+  	Program : String * List(Definition) -> Program
+  	
+
+    
+strategies
+  main =
+    io-wrap(execute)
+    
+rules
+  // show Comment and Function that have the same name
+	
+  execute:
+  	input -> output
+  	with
+  	  output := <match-comments> input
+
+rules
+	match-comments :
+		// match program
+		Program(_, definitions*) -> out
+		with
+			f* := <find-functions> definitions* // find functions
+			; c* := <find-comments> definitions* // find comments
+			; out := <match-f-and-c> (f*, c*)
+
+		
+	find-functions:
+		definition* -> functions*
+		with
+			functions* := <filter(?Function(_,_))> definition*
+			
+	find-comments:
+		definition* -> comments*
+		with
+			comments* := <filter(?Comment(_,_))> definition*
+			
+	match-f-and-c:
+		(f*, c*) -> matches*
+		with
+			//matches* := <map(find-comment-match(|c*))> f*
+			matches* := <map(try-find-comment-by-name(|c*))> f*
+		
+	try-find-comment-by-name(|c*) = find-comment-match(|c*) // <+ (debug(!"fail"); !"fail")	
+
+	// c* is a list of Comment
+	find-comment-match(|c*):
+		f -> (f, c)
+		// f should be a Function
+		where
+			name := <get-function-name> f
+			; c := <find-comment-by-name(|name)> c*
+
+	get-function-name:
+		Function(name, _) -> name
+			
+	find-comment-by-name(|name):
+		c* -> comment
+		with 
+		c-filtered* := <filter(?Comment(name, _))> c*
+		; comment := (<debug(!"stuff:"); first> c-filtered*) //  <+ !Comment(name, "created!!")
+		//; comment := <first> c-filtered*
+
+
+	old-first : c-list* -> out
+	where out := <last> c-list* <+ build-c
+	
+	is-empty = ?[] 
+	
+	
+	first = 
+		debug(!"first: ") ;
+		(is-empty < build-c + last)
+		
+	build-c = !Comment("new", "created!!")

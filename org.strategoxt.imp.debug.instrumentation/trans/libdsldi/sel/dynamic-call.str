@@ -1,0 +1,98 @@
+module libdsldi/sel/dynamic-call
+
+strategies
+	
+	// current term is the matched term
+	// returns the current term instrumented with debug information.
+	external java-call-gen-strategy(|strategy-name)
+	
+	// ignore current term
+	external java-register-gen-strategy(gen-strategy|strategy-name)
+	
+	// fails if no generation strategy was found with the given name
+	external java-exists-gen-strategy(|strategy-name)
+	
+	// current term is the matched term
+	// return debug-information.
+	external java-call-extract-strategy(|strategy-name)
+	
+	// ignore current term
+	external java-register-extract-strategy(extract-strategy|strategy-name)
+
+	// fails if no extract strategy was found with the given name
+	external java-exists-extract-strategy(|strategy-name)
+	
+	external java-register-parse-strategy(parse-strategy|strategy-name)
+	external java-call-parse-strategy(|strategy-name)
+
+    external java-register-write-strategy(parse-strategy|strategy-name)
+    external java-call-write-strategy(|strategy-name)
+
+    external java-register-post-instrumentation-strategy(parse-strategy|strategy-name)
+    external java-call-post-instrumentation-strategy(|strategy-name)
+    
+	//external java-copy-attachment(| t1, t2)
+	
+	// print the attachments to the console for the current term
+	external java-debug-attachments(|)
+	
+	//external java-invoke-strategy(|strategy-name)
+	
+	// returns a list of java runtime properties
+	external java-list-runtime-properties(|)
+	
+	external java-get-cons(|)
+	external java-get-sort(|)
+	
+	external java-record-term(|)
+	external java-write-recorded-terms(|filename)
+	
+	external java-term-hashcode(|)
+strategies
+
+    // current term is the matched term
+    // returns the current term instrumented with debug information.
+    ext-call-gen-strategy(|strategy-name) = java-call-gen-strategy(|strategy-name)
+    
+    // ignore current term
+    ext-register-gen-strategy(gen-strategy|strategy-name) = java-register-gen-strategy(gen-strategy|strategy-name)
+    
+    // fails if no generation strategy was found with the given name
+    ext-exists-gen-strategy(|strategy-name) = java-exists-gen-strategy(|strategy-name)
+    
+    // current term is the matched term
+    // return debug-information.
+    ext-call-extract-strategy(|strategy-name) = java-call-extract-strategy(|strategy-name)
+    
+    // ignore current term
+    ext-register-extract-strategy(extract-strategy|strategy-name) = java-register-extract-strategy(extract-strategy|strategy-name)
+
+    // fails if no extract strategy was found with the given name
+    ext-exists-extract-strategy(|strategy-name) = java-exists-extract-strategy(|strategy-name)
+
+
+    ext-register-parse-strategy(parse-strategy|strategy-name) = java-register-parse-strategy(parse-strategy|strategy-name)
+    ext-call-parse-strategy(|strategy-name) = java-call-parse-strategy(|strategy-name)
+
+    ext-register-write-strategy(write-strategy|strategy-name) = java-register-write-strategy(write-strategy|strategy-name)
+    ext-call-write-strategy(|strategy-name) = java-call-write-strategy(|strategy-name)
+
+    ext-register-post-instrumentation-strategy(post-strategy|strategy-name) = java-register-post-instrumentation-strategy(post-strategy|strategy-name)
+    ext-call-post-instrumentation-strategy(|strategy-name) = java-call-post-instrumentation-strategy(|strategy-name)
+
+    
+    //external java-copy-attachment(| t1, t2)
+    
+    // print the attachments to the console for the current term
+    ext-debug-attachments(|) = java-debug-attachments(|)
+
+    //ext-invoke-strategy(|strategy-name) = java-invoke-strategy(|strategy-name)
+    
+    ext-get-sort(|) = java-get-sort(|)
+    ext-get-cons(|) = java-get-cons(|)
+    
+    ext-record-term(|) = java-record-term(|)
+    ext-write-recorded-terms(|filename) = java-write-recorded-terms(|filename)
+    
+    ext-term-hashcode(|) = java-term-hashcode(|)
+    

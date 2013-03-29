@@ -1,0 +1,26 @@
+module DSLDI-Completions
+
+imports DSLDI-Completions.generated
+
+completions
+                                                                   
+  // This file is used to define content completion.               
+  //                                                               
+  // See the imported file for a brief introduction and examples.  
+                                                                   
+
+completions
+                                                                 
+  // Syntax completion:                                          
+                                                                 
+  completion template : SEL =      "instrumentation " <i> (blank)       
+                                                                 
+  completion template : InstrSpec = "event " <e>  (blank) 
+                                                                 
+
+completions
+  // Semantic (identifier) completion:   
+                                         
+//  completion proposer                  : editor-complete
+                                         
+//  completion trigger                   : ":"
