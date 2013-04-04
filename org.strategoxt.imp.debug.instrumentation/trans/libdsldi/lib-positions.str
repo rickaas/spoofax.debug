@@ -1,0 +1,26 @@
+module libdsldi/lib-positions
+/**
+ * Copied from editor-common.generated, prefixed with "lib-" to prevent name clashes.
+ * These strategies are available in the jar package of a Spoofax editor build, 
+ * unfortunately every Spoofax project jar only has a trans package and a trans.trans class.
+ * If we want to use the strategies from the editor project jar we will get conflicts because the generated
+ * Java code contains imports that will bring both the trans classes to the top level scope. 
+ */
+strategies
+    
+  lib-position-of-term(is-term):
+    t -> []
+    where
+      is-term
+  
+  lib-position-of-term(is-term):
+    _#(t*) -> <lib-position-of-term(is-term|0)> t*
+  
+  lib-position-of-term(is-term|start-index):
+    [t | t*] -> position
+    where
+      if i* := <lib-position-of-term(is-term)> t then
+        position := [start-index | i*]
+      else
+        position := <lib-position-of-term(is-term | <inc> start-index)> t*
+      end
