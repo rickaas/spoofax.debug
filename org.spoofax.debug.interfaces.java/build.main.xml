@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <project name="org.spoofax.debug.interfaces.java" default="release" basedir=".">
-
+	
     <property name="src.dir" value="src"/>
     <property name="build.dir" value="build"/>
 
