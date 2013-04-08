@@ -185,7 +185,7 @@ strategies
 	// When instrumenting fails, show message
 	try-instrument = ?(dsl-program-filename, dsl-program-aterm)
 	   // get-term-origin-location-tuple seems to fail for files that contain concrete syntax...
-        ; where(!dsl-program-aterm; get-term-origin-location-tuple; SET-TOP-LEVEL-LOCATION)
+        ; try(!dsl-program-aterm; get-term-origin-location-tuple; SET-TOP-LEVEL-LOCATION)
 		; (instrument-program-aterm 
 		<	// success
 			(
