@@ -14,21 +14,21 @@ public class FireEvent {
 
 	public static void enter(String eventInfo)
 	{
-		(new EnterEvent(eventInfo)).execute();
+		IEventFactoryInstance.INSTANCE.createEnter(eventInfo).execute();
 	}
 	
 	public static void exit(String eventInfo)
 	{
-		(new ExitEvent(eventInfo)).execute();
+		IEventFactoryInstance.INSTANCE.createEnter(eventInfo).execute();
 	}
 	
 	public static void var(String eventInfo)
 	{
-		(new VarEvent(eventInfo)).execute();
+		IEventFactoryInstance.INSTANCE.createEnter(eventInfo).execute();
 	}
 	
 	public static void step(String eventInfo)
 	{
-		(new StepEvent(eventInfo)).execute();
+		IEventFactoryInstance.INSTANCE.createEnter(eventInfo).execute();
 	}
 }
