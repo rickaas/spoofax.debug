@@ -19,16 +19,16 @@ public class FireEvent {
 	
 	public static void exit(String eventInfo)
 	{
-		IEventFactoryInstance.INSTANCE.createEnter(eventInfo).execute();
+		IEventFactoryInstance.INSTANCE.createExit(eventInfo).execute();
 	}
 	
 	public static void var(String eventInfo)
 	{
-		IEventFactoryInstance.INSTANCE.createEnter(eventInfo).execute();
+		IEventFactoryInstance.INSTANCE.createVar(eventInfo).execute();
 	}
 	
 	public static void step(String eventInfo)
 	{
-		IEventFactoryInstance.INSTANCE.createEnter(eventInfo).execute();
+		IEventFactoryInstance.INSTANCE.createStep(eventInfo).execute();
 	}
 }
