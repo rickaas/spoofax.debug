@@ -28,7 +28,7 @@
         <property name="include" location="include"/>
         <property name="lib" location="lib"/>
         <property name="build" location="bin"/>
-        <property name="dist" location="bin/dist"/>
+        <property name="dist" location="dist"/>
         
         <!-- Imports -->
         <property name="build.sdf.imports" value=""/>
