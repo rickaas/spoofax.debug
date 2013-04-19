@@ -48,4 +48,12 @@ ANT_EXTRA_ARGS="$ANT_STAT_ARGS"
 
 LIBDSLDI_DIR="$SPOOFAX_DEBUG_DIR/../dist-libdsldi"
 ARGS="-lib $LIBDSLDI_DIR $ANT_EXTRA_ARGS -Dstratego.spoofax.debug.library.base=$LIBDSLDI_DIR"
-ANT_OPTS="-Xss8m -Xmx1024m -server -XX:+UseParallelGC -XX:MaxPermSize=256m" ant -f build.main.external.xml $ARGS "$@"
+
+EXTRA_ANT_OPTS=
+if [ "DEBUG" == "$1" ]; then
+	echo Allow debugger to connect
+	EXTRA_ANT_OPTS="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5432"
+	shift
+fi
+
+ANT_OPTS="-Xss8m -Xmx1024m -server -XX:+UseParallelGC -XX:MaxPermSize=256m $EXTRA_ANT_OPTS" ant -f build.main.external.xml $ARGS "$@"
