@@ -10,8 +10,8 @@
 	<import file="ant-contrib/dsldi-contrib.xml" />
 
 	<!-- instrumentation properties -->
-	<property name="str.debug.instrumentation.sourcedir" value="." />
-	<property name="str.debug.instrumentation.targetdir" value="../instr" />
+	<property name="str.debug.instrumentation.sourcedir" value="trans" />
+	<property name="str.debug.instrumentation.targetdir" value="trans" />
 
         <!-- Key input modules -->
         <property name="sdfmodule" value="DSLDI"/>
