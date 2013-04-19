@@ -12,7 +12,7 @@ function GitClean {
 function Prepare {
 	# copy stuff to utils
 	mkdir $SPOOFAX_DEBUG_DIR/org.strategoxt.imp.debug.instrumentation/utils
-	cp $SPOOFAX_DEBUG_DIR../spoofax-project-utils/* $SPOOFAX_DEBUG_DIR/org.strategoxt.imp.debug.instrumentation/utils
+	cp $SPOOFAX_DEBUG_DIR/../spoofax-project-utils/* $SPOOFAX_DEBUG_DIR/org.strategoxt.imp.debug.instrumentation/utils
 }
 
 GitClean
