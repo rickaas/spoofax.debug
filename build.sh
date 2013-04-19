@@ -1,21 +1,35 @@
 #!/bin/bash
 
+SPOOFAX_DEBUG_DIR=`dirname "$(cd ${0%/*}/ && echo $PWD/${0##*/})"`
+
 # build debug.runtime.libraries
-cd org.spoofax.debug.interfaces.jar
+cd $SPOOFAX_DEBUG_DIR/org.spoofax.debug.interfaces
 ant -f build.main.xml clean
 ant -f build.main.xml
 
-cd ../
 
-cd org.spoofax.debug.interfaces.java.jar
+cd $SPOOFAX_DEBUG_DIR/org.spoofax.debug.interfaces.java
 ant -f build.main.xml clean
 ant -f build.main.xml
 
-cd ../
 
 # the following project contains stratego code
-cd org.strategoxt.imp.debug.instrumentationi
+cd $SPOOFAX_DEBUG_DIR/org.strategoxt.imp.debug.instrumentation
 
-LIBDSLDI_DIR="../dist-libdsldi"
-ARGS="instrument-all -lib $LIBDSLDI_DIR"
-ant -f build.main.external.xml $ARGS
+
+ANT_STATS_DIR=$SPOOFAX_DEBUG_DIR/stats/ant-stats/
+ANT_LOGS_DIR=$SPOOFAX_DEBUG_DIR/stats/ant-logs/
+
+mkdir -p $ANT_STATS_DIR
+mkdir -p $ANT_LOGS_DIR
+
+# arguments to configure AntStatistics
+THIRD_PARTY_DIR="$SPOOFAX_DEBUG_DIR/../thirdparty"
+ANT_STAT_EXTRA_ARGS="-Dantstatistics.directory=$ANT_STATS_DIR"
+ANT_STAT_ARGS="-lib $THIRD_PARTY_DIR -logger de.pellepelster.ant.statistics.AntStatisticsLogger        $ANT_STAT_EXTRA_ARGS"
+
+ANT_EXTRA_ARGS="$ANT_STAT_ARGS"
+
+LIBDSLDI_DIR="$SPOOFAX_DEBUG_DIR/../dist-libdsldi"
+ARGS="-lib $LIBDSLDI_DIR $ANT_EXTRA_ARGS "
+ant -f build.main.external.xml $ARGS instrument-all
