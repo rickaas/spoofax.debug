@@ -24,15 +24,7 @@
                         -I &quot;${trans}&quot;
                         -I &quot;${basedir}&quot;
                         -la stratego-lib -la stratego-sglr -la stratego-gpp -la stratego-xtc -la stratego-aterm 
-		                -la strc"/>
-	<!-- template lang imports:
-  <property name="build.stratego.args" value="
-      -library
-      -I &quot;${basedir}&quot;
-      -I &quot;${trans}&quot;
-      -la stratego-lib -la stratego-sglr -la stratego-gpp -la stratego-xtc -la stratego-aterm
-      -la stratego-sdf -la org.strategoxt.imp.editors.template.generated" />
-      -->
+                        -la strc"/>
 
 	<!-- we want a custom package name for the jars, otherwise it will clash with other stratego jars -->
 	<!-- build java library name -->
@@ -55,27 +47,12 @@
 	</condition>
 	<property name="build.strategoxt.stratego" location="${user.home}/.nix-profile/bin"/>
 
-	<!--<import file="build.generated.xml"/>-->
 	<import file="build.generated.xml" />
-
+	
+    <import file="build.libdsldi.xml" />
+	
 	<!-- Main target -->
 	<target name="all" depends="spoofaximp.default.jar, dist"/>
-
-	<target name="dist">
-		<copy file="${include}/dsldi-java-source.jar" preservelastmodified="true" todir="${dist}" />
-		<copy file="${include}/dsldi-java.jar" preservelastmodified="true" todir="${dist}" />
-		<copy file="${include}/dsldi-source.jar" preservelastmodified="true" todir="${dist}" />
-		<copy file="${include}/dsldi.jar" preservelastmodified="true" todir="${dist}" />
-		<copy file="${include}/libdsldi-source.jar" preservelastmodified="true" todir="${dist}" />
-		<copy file="${include}/libdsldi.jar" preservelastmodified="true" todir="${dist}" />
-		<copy file="${include}/libdsldi.rtree" preservelastmodified="true" todir="${dist}" />
-	</target>
-
-	<!--
-	   <target name="spoofaximp.default" depends="spoofaximp.default.ctree"/>
-	    <target name="spoofaximp.default.ctree" depends="check-classpath,init,sdf2table,meta-sdf2table,ppgen,pppack,stratego.aster,java.jar,stratego.ctree,sdf2imp,refresh"/>
-	    <target name="spoofaximp.default.jar" depends="check-classpath,init,sdf2table,meta-sdf2table,ppgen,pppack,stratego.aster,java.jar,stratego.jar.helper,sdf2imp,refresh"/>
-    -->
 
 	<!-- overrides of the targets in build.generated.xml -->
 	<target name="stratego.jar" depends="rtg2sig,utils-files">
@@ -88,133 +65,6 @@
 
 		<echo message="Compile the libdsldi stuff" />
 		<antcall target="libdsldi.stratego.jar" />
-	</target>
-
-	<!-- Stratego to Java compiler -->
-	<target name="libdsldi.stratego.jar" depends="rtg2sig,utils-files">
-		<!-- The dependset task compares a set of sources with a set of target files. 
-        If any of the sources has been modified more recently than any of the target files, 
-        all of the target files are removed. -->
-		<dependset>
-			<srcfileset dir="${basedir}">
-				<include name="**/*.str"/>
-				<include name="**/*.astr"/>
-				<exclude name="lib/*.generated.str"/>
-			</srcfileset>
-			<!-- if any of the stratego files are new, then remove the generated java files -->
-			<targetfileset file="${src-gen}/{build.stratego.library.location}/trans/Main.java"/>
-		</dependset>
-		<available file="${src-gen}/{build.stratego.library.location}/trans/Main.java" property="strc-java.available"/>
-		<antcall target="copy-jar"/>
-		<antcall target="libdsldi.stratego.jar.deletehelper"/>
-		<antcall target="libdsldi.stratego.jvm.helper">
-			<param name="build.stratego.outputfile" value="${src-gen}/${build.stratego.library.location}/trans/Main.java"/>
-			<param name="build.stratego.extraargs" value="-la java-front ${java.jar.import}"/>
-		</antcall>
-		<!--<javac classpath="utils/strategoxt.jar:${src-gen}${externaljarimport1}${externaljarimport2}${java.jar.classpath}" srcdir="${src-gen}" includes="trans/**" destdir="${build}" source="1.5" target="1.5" debug="on"/>-->
-		<!-- deleting the classfiles before compiling-->
-		<delete>
-			<fileset dir="${build}" includes="${build.stratego.library.location}/trans/**" />
-		</delete>
-		<javac classpath="utils/strategoxt.jar:${src-gen}${externaljarimport1}${externaljarimport2}${java.jar.classpath}" 
-			srcdir="${src-gen}" 
-			includes="${build.stratego.library.location}/trans/**" 
-			destdir="${build}" 
-			source="1.5" target="1.5" debug="on"/>
-		<!-- copy generated rtree to include/libdsldi.rtree -->
-		<copy file="${src-gen}/${build.stratego.library.location}/trans/Main.rtree" tofile="${include}/lib${strmodule}.rtree"/>
-		<!-- RL: is this still needed? the /trans directory is used by the dsldi.jar (SEL editor plugin)
-		copy all other generated files to the build-directory so they will be included when making the jar -->
-		<copy todir="${build}/trans">
-			<fileset dir="${src-gen}/${build.stratego.library.location}/trans" excludes="**/*.java"/>
-		</copy>
-		<!--
-		  the libdsldi.jar (a standalone stratego jar) also references other generated files (e.g. DSLDI.tbl)
-		-->
-		<copy todir="${build}/${build.stratego.library.location}/trans">
-			<fileset dir="${src-gen}/${build.stratego.library.location}/trans" excludes="**/*.java"/>
-		</copy>
-		<!-- Create a jar without java source code files -->
-		<jar 
-        	basedir="${build}" 
-        	includes="${build.stratego.library.location}/trans/**" 
-        	destfile="${include}/lib${strmodule}.tmp.jar"
-        >
-		</jar>
-		<move file="${include}/lib${strmodule}.tmp.jar" tofile="${include}/lib${strmodule}.jar"/>
-		<antcall target="make-source-jars"/>
-		<!-- Delete the class files of the stratego code -->
-		<delete>
-			<fileset dir="${build}" includes="${build.stratego.library.location}/trans/**"/>
-		</delete>
-	</target>
-
-	<target name="libdsldi.stratego.jar.deletehelper" unless="strc-java.available">
-		<delete>
-			<fileset dir="${src-gen}" includes="trans/**"/>
-			<fileset dir="${build}" includes="trans/**"/>
-		</delete>
-	</target>
-
-	<!-- 
-	   Compile the stratego code to java.
-	-->
-	<target name="libdsldi.stratego.jvm.helper" unless="strc-java.available" if="build.stratego.enabled">
-		<echo message="Build the libdsldi.jar" />
-		<delete file="${include}/${strmodule}.rtree" failonerror="false"/>
-		<!-- Create subdirectory that matches package-name -->
-		<mkdir dir="${src-gen}/${build.stratego.library.location}/trans" />
-		<java classname="org.strategoxt.strj.Main" failonerror="true">
-			<arg value="-i"/>
-			<arg value="${trans}/libdsldi/main.str"/>
-			<!-- use this if we want to split the stratego code in two jars! -->
-			<arg value="--main"/>
-			<arg value="launch-di"/>
-			<!-- <arg value="${trans}/${strmodule}.str"/> -->
-			<!-- Includes dsldi-library code and sel-editor code-->
-			<arg value="-o"/>
-			<arg value="${build.stratego.outputfile}"/>
-			<arg value="-p"/>
-			<arg value="${build.stratego.library.name}.trans"/>
-			<!-- used to be "trans" but we want a custom package name -->
-			<arg value="--library"/>
-			<arg value="--clean"/>
-			<arg line="${build.stratego.args}"/>
-			<arg line="${build.stratego.extraargs}"/>
-			<arg line="${externaljarflags}"/>
-			<arg line="${externaldefimport}"/>
-			<arg line="-I &quot;${lib}&quot; -I &quot;${include}&quot; --cache-dir &quot;${basedir}/.cache&quot;"/>
-		</java>
-		<delete file="${include}/${strmodule}.rtree" failonerror="false"/>
-		<!-- <mkdir dir="${build}/trans" /> -->
-	</target>
-
-	<!-- create jars that contain the java source code -->
-	<target name="make-source-jars">
-		<!-- create source jar for libdsldi.jar -->
-		<jar destfile="${include}/lib${strmodule}-source.tmp.jar" >
-			<fileset dir="${src-gen}">
-				<include name="${build.stratego.library.location}/trans/**"/>
-			</fileset>
-		</jar>
-		<!-- create source jar for dsldi-java.jar -->
-		<jar destfile="${include}/${strmodule}-java-source.tmp.jar" >
-			<fileset dir="${src-gen}">
-				<include name="${build.stratego.library.location}/**"/>
-				<exclude name="${build.stratego.library.location}/trans/**"/>
-			</fileset>
-		</jar>
-		<!-- create source jar for dsldi.jar -->
-		<jar destfile="${include}/${strmodule}-source.tmp.jar" >
-			<fileset dir="${src-gen}">
-				<exclude name="${build.stratego.library.location}/trans/**"/>
-				<exclude name="${build.stratego.library.location}/strategies/**"/>
-			</fileset>
-		</jar>
-		<move file="${include}/lib${strmodule}-source.tmp.jar" tofile="${include}/lib${strmodule}-source.jar"/>
-		<move file="${include}/${strmodule}-java-source.tmp.jar" tofile="${include}/${strmodule}-java-source.jar"/>
-		<move file="${include}/${strmodule}-source.tmp.jar" tofile="${include}/${strmodule}-source.jar"/>
-
 	</target>
 
 </project>

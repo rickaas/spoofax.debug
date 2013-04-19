@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<project name="DSLDI" default="all">
+
+	<!-- Import Ant contrib -->
+	<taskdef resource="net/sf/antcontrib/antcontrib.properties" />
+
+	<!-- Import instrumentation Ant contributions -->
+	<import file="ant-contrib/strategoxt-contrib-util.xml" />
+	<import file="ant-contrib/dsldi-contrib.xml" />
+
+	<!-- instrumentation properties -->
+	<property name="str.debug.instrumentation.sourcedir" value="." />
+	<property name="str.debug.instrumentation.targetdir" value"../instr" />
+
+        <!-- Key input modules -->
+        <property name="sdfmodule" value="DSLDI"/>
+        <property name="metasdfmodule" value="Stratego-DSLDI"/>
+        <property name="esvmodule" value="DSLDI"/>
+        <property name="strmodule" value="dsldi"/>
+    
+        <!-- Project directories -->
+        <property name="trans" location="trans"/>
+        <property name="src-gen" location="editor/java"/>
+        <property name="syntax" location="syntax"/>
+        <property name="include" location="include"/>
+        <property name="lib" location="lib"/>
+        <property name="build" location="bin"/>
+        <property name="dist" location="bin/dist"/>
+        
+        <!-- Imports -->
+        <property name="build.sdf.imports" value=""/>
+        <property name="build.stratego.args" value="
+                        --library
+                        -I &quot;${trans}&quot;
+                        -I &quot;${basedir}&quot;
+                        -la stratego-lib -la stratego-sglr -la stratego-gpp -la stratego-xtc -la stratego-aterm -la stratego-parallel
+                        -la strc
+                        "/>
+
+    <!-- we want a custom package name for the jars, otherwise it will clash with other stratego jars -->
+    <!-- build java library name -->
+    <property name="build.stratego.library.name" value="org.strategoxt.imp.debug.instrumentation"/>
+    <property name="build.stratego.library.location" value="org/strategoxt/imp/debug/instrumentation"/>
+
+    <!-- External .def and .jar locations -->
+    <!--<property name="externaldef" location="test/stratego/Stratego-Sugar.def" />
+    -->
+
+    <!-- Optional: external .def and .jar locations
+        <property name="externaldef" location="syntax/${sdfmodule}.def"/>
+        <property name="externaljar" value="../lib.jar"/>
+        <property name="externaljarflags" value="-la org.lib"/>
+        -->
+
+        <!-- Environment configuration for command-line builds -->
+        <condition property="build.strategoxt.sdf" value="${eclipse.spoofaximp.nativeprefix}" else="">
+            <isset property="eclipse.spoofaximp.nativeprefix"/>
+        </condition>
+        <property name="build.strategoxt.stratego" location="${user.home}/.nix-profile/bin"/>
+       	
+        <import file="build.generated.external.xml"/>
+        <property name="eclipse.spoofaximp.jars" location="utils"/>
+        
+        
+        <!-- Classpath for building outside of Eclipse -->
+		<path id="external.class.path">
+        	<pathelement path="${java.class.path}"/>
+					<fileset dir="utils">
+						<include name="**/*.jar"/>
+    			</fileset>
+        </path>
+
+        <import file="build.libdsldi.xml" />
+
+        <!-- Main target -->
+        <target name="all" depends="spoofaximp.default.jar, dist"/>
+	
+    <!-- overrides of the targets in build.generated.xml -->
+	<!-- assume utils directory contains: strategoxt.jar, StrategoMix.def, sdf2imp.jar, make_permissive.jar, aster.jar -->
+    <target name="stratego.jar" depends="rtg2sig">
+        <echo message="Overriding stratego.jar" />
+
+        <!-- compile the stuff in trans/libdsldi to a separate jar -->
+        <echo message="Compile the sel language stuff" />
+        <!-- calls stratego.jar in build.generated.external.xml -->
+        <antcall target="build.generated.external.stratego.jar" />
+
+        <echo message="Compile the libdsldi stuff" />
+        <antcall target="libdsldi.stratego.jar" />
+    </target>
+    </project>
