@@ -48,4 +48,4 @@ ANT_EXTRA_ARGS="$ANT_STAT_ARGS"
 
 LIBDSLDI_DIR="$SPOOFAX_DEBUG_DIR/../dist-libdsldi"
 ARGS="-lib $LIBDSLDI_DIR $ANT_EXTRA_ARGS "
-ant -f build.main.external.xml $ARGS instrument-all
+ant -f build.main.external.xml $ARGS "$@"
