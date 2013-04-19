@@ -56,4 +56,10 @@ if [ "DEBUG" == "$1" ]; then
 	shift
 fi
 
+if [ "DEBUG_SUSPEND" == "$1" ]; then
+	echo Wait for debugger to attach
+	EXTRA_ANT_OPTS="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5432"
+	shift
+fi
+
 ANT_OPTS="-Xss8m -Xmx1024m -server -XX:+UseParallelGC -XX:MaxPermSize=256m $EXTRA_ANT_OPTS" ant -f build.main.external.xml $ARGS "$@"
