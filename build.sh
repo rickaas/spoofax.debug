@@ -47,5 +47,5 @@ ANT_STAT_ARGS="-lib $THIRD_PARTY_DIR -logger de.pellepelster.ant.statistics.AntS
 ANT_EXTRA_ARGS="$ANT_STAT_ARGS"
 
 LIBDSLDI_DIR="$SPOOFAX_DEBUG_DIR/../dist-libdsldi"
-ARGS="-lib $LIBDSLDI_DIR $ANT_EXTRA_ARGS "
+ARGS="-lib $LIBDSLDI_DIR $ANT_EXTRA_ARGS -Dstratego.spoofax.debug.library.base=$LIBDSLDI_DIR"
 ant -f build.main.external.xml $ARGS "$@"
