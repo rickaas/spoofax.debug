@@ -37,7 +37,8 @@
                         -I &quot;${trans}&quot;
                         -I &quot;${basedir}&quot;
                         -la stratego-lib -la stratego-sglr -la stratego-gpp -la stratego-xtc -la stratego-aterm -la stratego-parallel
-                        -la strc
+						-la strc
+						${str.debug.runtime.args}
                         "/>
 
     <!-- we want a custom package name for the jars, otherwise it will clash with other stratego jars -->
