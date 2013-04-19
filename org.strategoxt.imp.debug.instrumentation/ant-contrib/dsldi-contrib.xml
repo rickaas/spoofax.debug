@@ -30,7 +30,7 @@
 
 	<!-- Assume we will only instrument the .str files in the trans directory -->
 	<target name="instrument-all">
-		<touch file=i"${str.debug.instrumentation.sourcedir}/dsldi.str" />
+		<touch file="${str.debug.instrumentation.sourcedir}/dsldi.str" />
 		<strategoxt-dsldi input-dir="${str.debug.instrumentation.sourcedir}" output-dir="${str.debug.instrumentation.targetdir}">
 			<str-dsldi-args>
 				<arg value="--report-failed-files" />
