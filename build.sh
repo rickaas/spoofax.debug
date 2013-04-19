@@ -2,6 +2,15 @@
 
 SPOOFAX_DEBUG_DIR=`dirname "$(cd ${0%/*}/ && echo $PWD/${0##*/})"`
 
+function GitClean {
+	git clean -f -dx .
+	git clean -f -X .
+	git clean -f -x .
+	git checkout .
+}
+
+GitClean
+
 # build debug.runtime.libraries
 cd $SPOOFAX_DEBUG_DIR/org.spoofax.debug.interfaces
 ant -f build.main.xml clean
@@ -26,7 +35,7 @@ mkdir -p $ANT_LOGS_DIR
 # arguments to configure AntStatistics
 THIRD_PARTY_DIR="$SPOOFAX_DEBUG_DIR/../thirdparty"
 ANT_STAT_EXTRA_ARGS="-Dantstatistics.directory=$ANT_STATS_DIR"
-ANT_STAT_ARGS="-lib $THIRD_PARTY_DIR -logger de.pellepelster.ant.statistics.AntStatisticsLogger        $ANT_STAT_EXTRA_ARGS"
+ANT_STAT_ARGS="-lib $THIRD_PARTY_DIR -logger de.pellepelster.ant.statistics.AntStatisticsLogger $ANT_STAT_EXTRA_ARGS"
 
 ANT_EXTRA_ARGS="$ANT_STAT_ARGS"
 
