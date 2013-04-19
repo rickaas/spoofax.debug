@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<project name="org.strategoxt.ant.instrument">
+
+	<!-- instrument stratego files with debug events -->
+	<macrodef name="strategoxt-dsldi">
+		<attribute name="input-dir" />
+		<attribute name="output-dir" />
+		<element name="str-dsldi-args" optional="true" />
+		<element name="str-dsldi-deps" optional="true" />
+		<sequential>
+			<property name="@{input-dir}.abs" location="@{input-dir}" />
+			<property name="@{output-dir}.abs" location="@{output-dir}" />
+			<uptodate-mio input="@{input-dir}" output="@{output-dir}" type="strategoxt-dsldi">
+				<action>
+					<java classname="org.strategoxt.imp.debuggers.stratego.instrumentation.Main" 
+						failonerror="true">
+						<arg value="--input-dir" />
+						<arg value="${@{input-dir}.abs}" />
+						<arg value="--output-dir" />
+						<arg value="${@{output-dir}.abs}" />
+						<str-dsldi-args />
+					</java>
+				</action>
+				<deps>
+					<str-dsldi-deps />
+				</deps>
+			</uptodate-mio>
+		</sequential>
+	</macrodef>
+
+	<target name="instrument-all">
+		<strategoxt-dsldi input-dir="${str.debug.instrumentation.sourcedir}" output-dir="${str.debug.instrumentation.targetdir}">
+			<str-dsldi-args>
+				<arg value="--report-failed-files" />
+				<arg value="failed-files.log" />
+				<arg value="--report-succeeded-files" />
+				<arg value="succeeded-files.log" />
+				<arg value="--report-runtime-properties"/>
+				<arg value="runtimeprops.log"/>
+				<arg value="--verbose"/>
+				<arg value="1"/>
+				<arg value="--statistics"/>
+				<arg value="1"/>
+			</str-dsldi-args>
+			<str-dsldi-deps>
+				<srcfiles dir="${str.debug.instrumentation.sourcedir}"
+				          includes="**/*.str" />
+			</str-dsldi-deps>
+		</strategoxt-dsldi>
+	</target>
+</project>
