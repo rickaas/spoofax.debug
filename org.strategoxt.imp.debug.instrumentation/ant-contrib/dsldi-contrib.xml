@@ -12,14 +12,14 @@
 			<property name="@{output-dir}.abs" location="@{output-dir}" />
 			<uptodate-mio input="@{input-dir}" output="@{output-dir}" type="strategoxt-dsldi">
 				<action>
-					<java classname="org.strategoxt.imp.debuggers.stratego.instrumentation.Main" 
+					<java.debuggable classname="org.strategoxt.imp.debuggers.stratego.instrumentation.Main" 
 						failonerror="true">
 						<arg value="--input-dir" />
 						<arg value="${@{input-dir}.abs}" />
 						<arg value="--output-dir" />
 						<arg value="${@{output-dir}.abs}" />
 						<str-dsldi-args />
-					</java>
+					</java.debuggable>
 				</action>
 				<deps>
 					<str-dsldi-deps />
@@ -50,4 +50,14 @@
 			</str-dsldi-deps>
 		</strategoxt-dsldi>
 	</target>
+
+	<property name="java.debug.runjdwp.options" value="transport=dt_socket,server=y,suspend=y,address=5432" />
+
+	<presetdef name="java.debuggable">
+		<java>
+			<jvmarg value="-Xdebug" />
+			<jvmarg value="-Xrunjdwp:${java.debug.runjdwp.options}" />
+		</java>
+	</presetdef>
+
 </project>
