@@ -35,25 +35,31 @@ public class java_record_term_0_0 extends Strategy {
 		File f = new File(filename.stringValue());
 
 		//System.out.println("FILE: " + f.getAbsolutePath());
-		BufferedWriter w = new BufferedWriter(new FileWriter(f));
-		for(IStrategoTerm term : this.recorded)
-		{
-			w.write("==================" + term.hashCode());
-			w.newLine();
-			w.write(term.toString());
-			w.newLine();
-			ITermAttachment att = term.getAttachment((TermAttachmentType<ITermAttachment>)null);
-			while(att != null)
-			{
-				w.write("ATT TYPE:"  + att.getAttachmentType());
+		BufferedWriter w = null;
+		try {
+			w = new BufferedWriter(new FileWriter(f));
+			for(IStrategoTerm term : this.recorded) {
+				w.write("==================" + term.hashCode());
 				w.newLine();
-				w.write(att.toString());
+				w.write(term.toString());
 				w.newLine();
-				att = att.getNext();
+				ITermAttachment att = term.getAttachment((TermAttachmentType<ITermAttachment>)null);
+				while(att != null)
+				{
+					w.write("ATT TYPE:"  + att.getAttachmentType());
+					w.newLine();
+					w.write(att.toString());
+					w.newLine();
+					att = att.getNext();
+				}
+				w.write("==================");
+				w.newLine();
 			}
-			w.write("==================");
-			w.newLine();
+			w.flush();
+		} finally {
+			if (w != null) {
+				w.close();
+			}
 		}
-		w.flush();
 	}
 }
