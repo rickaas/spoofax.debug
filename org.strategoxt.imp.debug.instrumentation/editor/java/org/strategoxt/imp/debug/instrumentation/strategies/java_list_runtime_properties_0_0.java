@@ -7,7 +7,6 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
 
-import org.spoofax.interpreter.terms.IStrategoList;
 import org.spoofax.interpreter.terms.IStrategoTerm;
 import org.strategoxt.lang.Context;
 import org.strategoxt.lang.Strategy;
@@ -27,6 +26,7 @@ public class java_list_runtime_properties_0_0 extends Strategy {
 		}
 		
 		Properties p = System.getProperties();
+		@SuppressWarnings("rawtypes")
 		Enumeration keys = p.keys();
 		while (keys.hasMoreElements()) {
 		  String key = (String)keys.nextElement();
