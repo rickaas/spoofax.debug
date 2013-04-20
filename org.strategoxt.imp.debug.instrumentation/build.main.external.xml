@@ -94,15 +94,15 @@
     </target>
 	
 	<target name="dist-libdsldi" depends="
-                                          check-classpath,
-                                          sdf2table,
-                                          meta-sdf2table,
-                                          ppgen
-                                          pppack
-                                          sdf2imp.standalone
-                                          sdf2parenthesize
-                                          rtg2sig
-                                          libdsldi.stratego.jar
-                                          dist
+        build.generated.external.check-classpath,
+        build.generated.external.sdf2table,
+        build.generated.external.meta-sdf2table,
+        build.generated.external.ppgen,
+        build.generated.external.pppack,
+        build.generated.external.sdf2imp.standalone,
+        build.generated.external.sdf2parenthesize,
+        build.generated.external.rtg2sig,
+		build.libdsldi.libdsldi.stratego.jar,
+		build.libdsldi.dist
                                           " />
 </project>
