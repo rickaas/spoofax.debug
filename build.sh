@@ -15,6 +15,17 @@ function Prepare {
 	cp $SPOOFAX_DEBUG_DIR/../spoofax-project-utils/* $SPOOFAX_DEBUG_DIR/org.strategoxt.imp.debug.instrumentation/utils
 }
 
+function DistCopy {
+	echo Dist $DIST_CONFIG
+	# copy
+	DIST_DIR=$SPOOFAX_DEBUG_DIR/../dist/spoofax.debug/$DIST_CONFIG
+	rm -rf $DIST_DIR
+	mkdir -p $DIST_DIR
+	cp $SPOOFAX_DEBUG_DIR/org.spoofax.debug.interfaces/build/jar/* $DIST_DIR
+	cp $SPOOFAX_DEBUG_DIR/org.spoofax.debug.interfaces.java/build/jar/* $DIST_DIR
+	cp $SPOOFAX_DEBUG_DIR/org.strategoxt.imp.debug.instrumentation/dist $DIST_DIR
+}
+
 GitClean
 Prepare
 
@@ -62,4 +73,21 @@ if [ "DEBUG_SUSPEND" == "$1" ]; then
 	shift
 fi
 
+DIST_CONFIG=
+if [ "DIST_DEBUG" == "$1" ]; then
+	echo Distribute Debug
+	DIST_CONFIG="debug"
+	shift
+fi
+if [ "DIST_RELEASE" == "$1" ]; then
+	echo Distribute Release
+	DIST_CONFIG="release"
+	shift
+fi
+
 ANT_OPTS="-Xss8m -Xmx1024m -server -XX:+UseParallelGC -XX:MaxPermSize=256m $EXTRA_ANT_OPTS" ant -f build.main.external.xml $ARGS "$@"
+
+if [ -n "$DIST_CONFIG" ]; then
+	# dist is configured, copy it
+	DistCopy
+fi
