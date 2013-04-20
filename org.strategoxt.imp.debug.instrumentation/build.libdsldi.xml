@@ -3,10 +3,14 @@
 <project name="build.libdsldi">
 
     <target name="dist">
+    	<!-- 
+    	Only libdsldi.jar is distributed because it i a standalone jar, 
+    	it contains the stratego code and external strategies implemented in Java
         <copy file="${include}/dsldi-java-source.jar" preservelastmodified="true" todir="${dist}" />
         <copy file="${include}/dsldi-java.jar" preservelastmodified="true" todir="${dist}" />
         <copy file="${include}/dsldi-source.jar" preservelastmodified="true" todir="${dist}" />
         <copy file="${include}/dsldi.jar" preservelastmodified="true" todir="${dist}" />
+        -->
         <copy file="${include}/libdsldi-source.jar" preservelastmodified="true" todir="${dist}" />
         <copy file="${include}/libdsldi.jar" preservelastmodified="true" todir="${dist}" />
         <copy file="${include}/libdsldi.rtree" preservelastmodified="true" todir="${dist}" />
