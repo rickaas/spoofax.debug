@@ -38,12 +38,15 @@
         <!-- deleting the classfiles before compiling-->
         <delete>
             <fileset dir="${build}" includes="${build.stratego.library.location}/trans/**" />
+            <fileset dir="${build}" includes="${build.stratego.library.location}/strategies/**" />
         </delete>
         <javac classpath="utils/strategoxt.jar:${src-gen}${externaljarimport1}${externaljarimport2}${java.jar.classpath}" 
-            srcdir="${src-gen}" 
-            includes="${build.stratego.library.location}/trans/**" 
             destdir="${build}" 
-            source="1.5" target="1.5" debug="on"/>
+            source="1.5" target="1.5" debug="on">
+            <src path="${src-gen}"/>
+            <include name="${build.stratego.library.location}/trans/**" />
+            <include name="${build.stratego.library.location}/strategies/**" />
+        </javac>
         <!-- copy generated rtree to include/libdsldi.rtree -->
         <copy file="${src-gen}/${build.stratego.library.location}/trans/Main.rtree" tofile="${include}/lib${strmodule}.rtree"/>
         <!-- RL: is this still needed? the /trans directory is used by the dsldi.jar (SEL editor plugin)
