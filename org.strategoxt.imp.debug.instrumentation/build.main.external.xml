@@ -10,11 +10,22 @@
 	<import file="ant-contrib/dsldi-contrib.xml" />
 
 	<!-- instrumentation properties -->
+	<!-- targetdir equals the sourcedir because instrumentation phase is a separate step 
+	(and not yet integrated in the strj compiler) --> 
 	<property name="str.debug.instrumentation.sourcedir" value="trans" />
 	<property name="str.debug.instrumentation.targetdir" value="trans" />
 	<property name="stratego.spoofax.debug.library.base" value="include" />
-	<property name="str.debug.runtime.args" value="-I ${stratego.spoofax.debug.library.base} -la org.strategoxt.imp.debuggers.stratego.runtime.strategies" />
+    <property name="str.debug.runtime.args.default" value="-I ${stratego.spoofax.debug.library.base} -la org.strategoxt.imp.debuggers.stratego.runtime.strategies" />
 
+    <property name="instrument.me" value="" />
+    
+    <!-- put required libraries on path when compiling Stratego to Java -->
+    <condition property="str.debug.runtime.args" value="${str.debug.runtime.args.default}" else="">
+        <!--<isset property="instrument.me"/>-->
+        <!-- explicitly check for "true" -->
+        <equals arg1="true" arg2="${instrument.me}" />
+    </condition>
+	
         <!-- Key input modules -->
         <property name="sdfmodule" value="DSLDI"/>
         <property name="metasdfmodule" value="Stratego-DSLDI"/>
