@@ -63,9 +63,10 @@
         <!-- Create a jar without java source code files -->
         <jar 
             basedir="${build}" 
-            includes="${build.stratego.library.location}/trans/**" 
             destfile="${include}/lib${strmodule}.tmp.jar"
         >
+            <include name="${build.stratego.library.location}/trans/**" />
+            <include name="${build.stratego.library.location}/strategies/**" />
         </jar>
         <move file="${include}/lib${strmodule}.tmp.jar" tofile="${include}/lib${strmodule}.jar"/>
         <antcall target="make-source-jars"/>
@@ -148,6 +149,7 @@
         <jar destfile="${include}/lib${strmodule}-source.tmp.jar" >
             <fileset dir="${src-gen}">
                 <include name="${build.stratego.library.location}/trans/**"/>
+                <include name="${build.stratego.library.location}/strategies/**"/>
             </fileset>
         </jar>
         <!-- create source jar for dsldi-java.jar -->
