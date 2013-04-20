@@ -92,4 +92,17 @@
         <echo message="Compile the libdsldi stuff" />
         <antcall target="libdsldi.stratego.jar" />
     </target>
-    </project>
+	
+	<target name="dist-libdsldi" depends="
+                                          check-classpath,
+                                          sdf2table,
+                                          meta-sdf2table,
+                                          ppgen
+                                          pppack
+                                          sdf2imp.standalone
+                                          sdf2parenthesize
+                                          rtg2sig
+                                          libdsldi.stratego.jar
+                                          dist
+                                          " />
+</project>
