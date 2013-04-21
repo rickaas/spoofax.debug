@@ -17,7 +17,7 @@
     </target>
     
     <!-- Stratego to Java compiler -->
-	<!-- Assume rtg2sig is already called via the parent target -->
+    <!-- Assume rtg2sig is already called via the parent target -->
     <target name="libdsldi.stratego.jar">
         <!-- The dependset task compares a set of sources with a set of target files. 
         If any of the sources has been modified more recently than any of the target files, 
@@ -31,6 +31,14 @@
             <!-- if any of the stratego files are new, then remove the generated java files -->
             <targetfileset file="${src-gen}/{build.stratego.library.location}/trans/Main.java"/>
         </dependset>
+        <!-- before compiling str to Java, we might have to instrument the stratego code -->
+        <if>
+            <equals arg1="${str.instrumentation.enabled}" arg2="true" />
+            <then>
+                <antcall target="instrument-all" />
+            </then>
+        </if>
+        <!-- now compile the stuff to Java -->
         <available file="${src-gen}/{build.stratego.library.location}/trans/Main.java" property="strc-java.available"/>
         <antcall target="copy-jar"/>
         <antcall target="libdsldi.stratego.jar.deletehelper"/>
@@ -44,6 +52,7 @@
             <fileset dir="${build}" includes="${build.stratego.library.location}/trans/**" />
             <fileset dir="${build}" includes="${build.stratego.library.location}/strategies/**" />
         </delete>
+        <!-- compile java -->
         <javac classpath="utils/strategoxt.jar:${src-gen}${externaljarimport1}${externaljarimport2}${java.jar.classpath}" 
             destdir="${build}" 
             source="1.5" target="1.5" debug="on">

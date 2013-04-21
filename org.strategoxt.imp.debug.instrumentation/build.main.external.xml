@@ -2,30 +2,30 @@
 
 <project name="DSLDI" default="all">
 
-	<!-- Import Ant contrib -->
-	<taskdef resource="net/sf/antcontrib/antcontrib.properties" />
+    <!-- Import Ant contrib -->
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties" />
 
-	<!-- Import instrumentation Ant contributions -->
-	<import file="ant-contrib/strategoxt-contrib-util.xml" />
-	<import file="ant-contrib/dsldi-contrib.xml" />
+    <!-- Import instrumentation Ant contributions -->
+    <import file="ant-contrib/strategoxt-contrib-util.xml" />
+    <import file="ant-contrib/dsldi-contrib.xml" />
 
-	<!-- instrumentation properties -->
-	<!-- targetdir equals the sourcedir because instrumentation phase is a separate step 
-	(and not yet integrated in the strj compiler) --> 
-	<property name="str.debug.instrumentation.sourcedir" value="trans" />
-	<property name="str.debug.instrumentation.targetdir" value="trans" />
-	<property name="stratego.spoofax.debug.library.base" value="include" />
+    <!-- instrumentation properties -->
+    <!-- targetdir equals the sourcedir because instrumentation phase is a separate step 
+    (and not yet integrated in the strj compiler) --> 
+    <property name="str.debug.instrumentation.sourcedir" value="trans" />
+    <property name="str.debug.instrumentation.targetdir" value="trans" />
+    <property name="stratego.spoofax.debug.library.base" value="include" />
     <property name="str.debug.runtime.args.default" value="-I ${stratego.spoofax.debug.library.base} -la org.strategoxt.imp.debuggers.stratego.runtime.strategies" />
 
-    <property name="instrument.me" value="" />
+    <property name="str.instrumentation.enabled" value="false" />
     
     <!-- put required libraries on path when compiling Stratego to Java -->
     <condition property="str.debug.runtime.args" value="${str.debug.runtime.args.default}" else="">
         <!--<isset property="instrument.me"/>-->
         <!-- explicitly check for "true" -->
-        <equals arg1="true" arg2="${instrument.me}" />
+        <equals arg1="true" arg2="${str.instrumentation.enabled}" />
     </condition>
-	
+
         <!-- Key input modules -->
         <property name="sdfmodule" value="DSLDI"/>
         <property name="metasdfmodule" value="Stratego-DSLDI"/>
@@ -103,8 +103,9 @@
         <echo message="Compile the libdsldi stuff" />
         <antcall target="libdsldi.stratego.jar" />
     </target>
-	
-	<target name="dist-libdsldi" depends="
+
+    <!-- only build the libdsldi.jar -->
+    <target name="dist-libdsldi" depends="
         build.generated.external.check-classpath,
         build.generated.external.sdf2table,
         build.generated.external.meta-sdf2table,
@@ -113,7 +114,7 @@
         build.generated.external.sdf2imp.standalone,
         build.generated.external.sdf2parenthesize,
         build.generated.external.rtg2sig,
-		build.libdsldi.libdsldi.stratego.jar,
-		build.libdsldi.dist
-                                          " />
+        build.libdsldi.libdsldi.stratego.jar,
+        build.libdsldi.dist
+        " />
 </project>
