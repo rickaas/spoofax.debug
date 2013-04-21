@@ -23,7 +23,7 @@ function DistCopy {
 	mkdir -p $DIST_DIR
 	cp $SPOOFAX_DEBUG_DIR/org.spoofax.debug.interfaces/build/jar/* $DIST_DIR
 	cp $SPOOFAX_DEBUG_DIR/org.spoofax.debug.interfaces.java/build/jar/* $DIST_DIR
-	cp $SPOOFAX_DEBUG_DIR/org.strategoxt.imp.debug.instrumentation/dist $DIST_DIR
+	cp $SPOOFAX_DEBUG_DIR/org.strategoxt.imp.debug.instrumentation/dist/* $DIST_DIR
 }
 
 GitClean
@@ -77,11 +77,13 @@ DIST_CONFIG=
 if [ "DIST_DEBUG" == "$1" ]; then
 	echo Distribute Debug
 	DIST_CONFIG="debug"
+	ARGS="$ARGS -Dstr.instrumentation.enabled=true dist-libdsldi"
 	shift
 fi
 if [ "DIST_RELEASE" == "$1" ]; then
 	echo Distribute Release
 	DIST_CONFIG="release"
+	ARGS="$ARGS dist-libdsldi"
 	shift
 fi
 
