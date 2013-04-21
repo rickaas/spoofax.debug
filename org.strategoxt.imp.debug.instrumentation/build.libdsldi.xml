@@ -35,6 +35,7 @@
         <if>
             <equals arg1="${str.instrumentation.enabled}" arg2="true" />
             <then>
+                <touch file="${trans}/libdsldi/main.str" />
                 <antcall target="instrument-all" />
             </then>
         </if>
