@@ -8,8 +8,7 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.ant.core
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Bundle-ClassPath: lib/libdsldi/dsldi-java.jar,
- lib/libdsldi/libdsldi.jar,
+Bundle-ClassPath: lib/libdsldi/libdsldi.jar,
  lib/runtime/org.spoofax.debug.interfaces.jar,
  lib/runtime/org.spoofax.debug.interfaces.java.jar,
  .
@@ -19,12 +18,5 @@ Export-Package: org.spoofax.debug.instrumentation;uses:="org.eclipse.core.runtim
  org.spoofax.debug.interfaces.extractor,
  org.spoofax.debug.interfaces.info,
  org.spoofax.debug.interfaces.java,
- org.strategoxt.imp.debug.instrumentation;
-  uses:="org.eclipse.imp.preferences,
-   org.eclipse.imp.parser,
-   org.eclipse.imp.runtime,
-   org.strategoxt.imp.runtime.services,
-   org.osgi.framework,
-   org.strategoxt.imp.runtime.dynamicloading",
  org.strategoxt.imp.debug.instrumentation.strategies;uses:="org.strategoxt.lang,org.spoofax.interpreter.terms",
  org.strategoxt.imp.debug.instrumentation.trans;uses:="org.spoofax.interpreter.core,org.strategoxt.lang,org.spoofax.interpreter.terms"

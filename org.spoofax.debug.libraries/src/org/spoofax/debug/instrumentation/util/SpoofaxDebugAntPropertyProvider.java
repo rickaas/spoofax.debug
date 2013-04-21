@@ -8,8 +8,6 @@ public class SpoofaxDebugAntPropertyProvider implements IAntPropertyValueProvide
 
 	public static final String SPOOFAX_DEBUG_INTERFACES_JAVA_JAR = "eclipse.spoofax.debug.interfaces.java.jar";
 	public static final String SPOOFAX_DEBUG_INTERFACES_JAR = "eclipse.spoofax.debug.interfaces.jar";
-	public static final String DSLDI_JAVA_JAR = "eclipse.dsldi.java.jar";
-	public static final String DSLDI_JAR = "eclipse.dsldi.jar";
 	public static final String LIBDSLDI_JAR = "eclipse.libdsldi.jar";
 	
 	@Override
@@ -20,12 +18,6 @@ public class SpoofaxDebugAntPropertyProvider implements IAntPropertyValueProvide
 			return url.getFile();
 		} else if (SPOOFAX_DEBUG_INTERFACES_JAVA_JAR.equals(antPropertyName)) {
 			URL url = JavaDebugLibraryJarLocation.getJavaInterfacesPath();
-			return url.getFile();
-		} else if (DSLDI_JAVA_JAR.equals(antPropertyName)) {
-			URL url = LibDsldiJarLocations.getDsldiJava();
-			return url.getFile();
-		} else if (DSLDI_JAR.equals(antPropertyName)) {
-			URL url = LibDsldiJarLocations.getDsldi();
 			return url.getFile();
 		} else if (LIBDSLDI_JAR.equals(antPropertyName)) {
 			URL url = LibDsldiJarLocations.getLibdsldi();
