@@ -12,6 +12,8 @@ public interface IDebugServiceFactory {
 	
 	LIDebugTarget createDebugTarget(ILaunch launch, String port);
 	
+	LIDebugTarget createDebugTarget(String languageID, ILaunch launch, VirtualMachine vm);
+	
 	LIConstants getLIConstants();
 	
 }

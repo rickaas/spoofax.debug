@@ -49,7 +49,15 @@ public class LIValue extends LIDebugElement implements IValue {
 		LIValue other = (LIValue) obj;
 		boolean sameValue = false;
 		try {
-			sameValue = other.getValueString().equals(this.getValueString());
+			if (other.getValueString() == null && this.getValueString() == null) {
+				sameValue = true; 
+			} else if (other.getValueString() == null) {
+				sameValue = false;
+			} else if (this.getValueString() == null) {
+				sameValue = false;
+			} else {
+				sameValue = other.getValueString().equals(this.getValueString());
+			}
 		} catch (DebugException e) {
 			// ignore exceptions
 		}

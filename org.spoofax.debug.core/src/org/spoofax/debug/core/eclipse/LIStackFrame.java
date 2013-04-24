@@ -136,6 +136,8 @@ public class LIStackFrame extends LIDebugElement implements IStackFrame {
 	}
 
 	public int getCharStart() throws DebugException {
+		if (this.target.sourceOffsetConvertor == null) return -1;
+		
 		String filename = data.currentLocation().getFilename();
 		int linenumber = data.currentLocation().getLocationInfo().getStart_line_num();
 		int lineOffset = this.target.sourceOffsetConvertor.getLineOffset(filename, linenumber);
@@ -147,6 +149,8 @@ public class LIStackFrame extends LIDebugElement implements IStackFrame {
 	}
 
 	public int getCharEnd() throws DebugException {
+		if (this.target.sourceOffsetConvertor == null) return -1;
+		
 		String filename = data.currentLocation().getFilename();
 		int linenumber = data.currentLocation().getLocationInfo().getEnd_line_num();
 		int lineOffset = this.target.sourceOffsetConvertor.getLineOffset(filename, linenumber);

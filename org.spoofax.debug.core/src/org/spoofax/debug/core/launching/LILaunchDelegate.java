@@ -17,13 +17,14 @@ import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.IStatusHandler;
 import org.eclipse.debug.core.model.ILaunchConfigurationDelegate;
+import org.eclipse.debug.core.model.LaunchConfigurationDelegate;
 import org.eclipse.jdt.launching.AbstractJavaLaunchConfigurationDelegate;
 import org.spoofax.debug.core.control.launching.IJavaProgramLaunchPreparation;
 import org.spoofax.debug.core.control.launching.IJavaProgramPrepareResult;
 import org.spoofax.debug.core.control.launching.LaunchPreparationException;
 import org.spoofax.debug.core.language.LIConstants;
 
-public abstract class LILaunchDelegate extends AbstractJavaLaunchConfigurationDelegate implements ILaunchConfigurationDelegate {
+public abstract class LILaunchDelegate extends LaunchConfigurationDelegate implements ILaunchConfigurationDelegate {
 
 	private IProject project;
 	

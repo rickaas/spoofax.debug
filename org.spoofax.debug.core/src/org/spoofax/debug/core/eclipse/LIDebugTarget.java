@@ -26,11 +26,13 @@ import org.eclipse.debug.core.model.IProcess;
 import org.eclipse.debug.core.model.ISuspendResume;
 import org.eclipse.debug.core.model.ITerminate;
 import org.eclipse.debug.core.model.IThread;
+import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 import org.spoofax.debug.core.control.events.AbstractBreakPoint;
 import org.spoofax.debug.core.control.events.LineBreakPoint;
 import org.spoofax.debug.core.control.java.VMContainer;
 import org.spoofax.debug.core.control.java.VMContainerStub;
 import org.spoofax.debug.core.control.java.VMLaunchHelper;
+import org.spoofax.debug.core.language.LIConstants;
 import org.spoofax.debug.core.language.events.IVMMonitor;
 import org.spoofax.debug.interfaces.info.IEventInfo;
 
@@ -99,7 +101,7 @@ public class LIDebugTarget extends LIDebugElement implements IDebugTarget,
 	 * @param launch
 	 * @param vm
 	 */
-	public LIDebugTarget(IDebugTarget javaTarget, String languageID,
+	public LIDebugTarget(String languageID,
 			ILaunch launch, VirtualMachine vm) {
 		super(null, languageID);
 
@@ -204,7 +206,13 @@ public class LIDebugTarget extends LIDebugElement implements IDebugTarget,
 	}
 
 	private void initSourceConvertor() {
-		// program name
+		String project = getTargetProject();
+		if (project != null) {
+			this.sourceOffsetConvertor = new LISourceOffsetConvertor(project);
+		}
+	}
+	
+	private String getTargetProgramLocation() {
 		ILaunchConfiguration configuration = this.launch
 				.getLaunchConfiguration();
 		String program = null;
@@ -215,10 +223,30 @@ public class LIDebugTarget extends LIDebugElement implements IDebugTarget,
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		IFile file = ResourcesPlugin.getWorkspace().getRoot()
-				.getFile(new Path(program));
-		String project = file.getProject().getName();
-		this.sourceOffsetConvertor = new LISourceOffsetConvertor(project);
+		return program;
+	}
+	
+	private String getTargetProject() {
+		String project = null;
+		
+		String program = getTargetProgramLocation();
+		if (program == null) {
+			// try to get the project attribute
+			ILaunchConfiguration configuration = this.launch
+					.getLaunchConfiguration();
+			try {
+				project = configuration.getAttribute(IJavaLaunchConfigurationConstants.ATTR_PROJECT_NAME, (String) null);
+			} catch (CoreException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} else {
+			IFile file = ResourcesPlugin.getWorkspace().getRoot()
+					.getFile(new Path(program));
+			project = file.getProject().getName();
+		}
+		return project;
+
 	}
 
 	public IDebugTarget getDebugTarget() {
