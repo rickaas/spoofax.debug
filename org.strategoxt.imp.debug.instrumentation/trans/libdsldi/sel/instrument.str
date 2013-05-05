@@ -147,7 +147,6 @@ strategies
 		; <SET-TOTAL-WORKUNITS> number-of-files
 		; <SET-WORKUNIT-PROGRESS> 0
 		; result := <map(dsldi-log-timed(instrument-file|"File instrumentation", Notice()))> dsl-program-files
-		; debug
 		; SET-INSTRUMENTATION-SUMMARY
 
 	// current term is the relative location of a DSL program.
@@ -169,7 +168,8 @@ strategies
 		; dr-begin-scope(|"GET-SUBWORKUNIT-STAT")
 		; <log-info(|<separate-by(|" ") ; concat-strings>["Instrumenting", <workunit-progress-as-string>, ": "])> dsl-program-filename
 		  // tries to parse, if successfull instrument program
-		; <try-parse-and-instrument> dsl-program-filename => instrumentation-status
+		; <profile-subworkunit-stat-duration(try-parse-and-instrument|"file-total-time")> dsl-program-filename => instrumentation-status
+		//; <try-parse-and-instrument> dsl-program-filename => instrumentation-status
         ; key := <GET-DSL-PROGRAM-FILENAME> // TODO: ensure that the names are unique
 		; get-all-workunit-stats => workunit-stats
         ; entry := (key, workunit-stats)

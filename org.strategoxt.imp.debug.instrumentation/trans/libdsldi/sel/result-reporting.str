@@ -64,6 +64,7 @@ strategies
               ; create-result-report(isSuccess, result-item-to-row-string|<get-report-success-location>)
           end
         //; !("foo.aterm", "contents")
+        ; try(report-all-workunit-stats)
         ; !result
     
     create-result-report(result-filter, result-item-to-row-string|report-location) = ?result
@@ -151,7 +152,9 @@ strategies
     	; !current; s
     	; where(
     	      <diff-times>(<times>,starttime) => duration
-    	      ; <SET-SUBWORKUNIT-STAT> (stat-key, duration)
+    	      ; <self-children-user-time; ticks-to-seconds /*; real-to-string(|2)*/> duration => user-time
+    	      ; <self-children-sys-time; ticks-to-seconds /*; real-to-string(|2)*/> duration => sys-time
+    	      ; <SET-SUBWORKUNIT-STAT> (stat-key, (user-time, sys-time))
           )
     
     /**
@@ -179,18 +182,63 @@ strategies
         ; inc
         ; <SET-SUBWORKUNIT-STAT> (stat-key, <id>)
           
+    report-all-workunit-stats = 
+        all-keys-GET-WORKUNIT-STATS
+        ; map(report-workunit-stat)
+        ; !["Enter-event-count", "Exit-event-count", "Step-event-count"] => event-counters
+        ; !["parse-time", "instrumentation-time", "write-time", "file-total-time"] => timings
+        ; event-counters-prefix-width := <map(string-length); list-max> event-counters
+        ; timings-prefix-width := <map(string-length); list-max> timings
+        ; <map(report-subworkunit-total-on-count(|event-counters-prefix-width))> event-counters 
+        ; <map(report-subworkunit-total-on-time(|timings-prefix-width))> timings
+
+    // Values for stat-key should be integers
+    report-subworkunit-total-on-count(|prefix-width) = ?stat-key
+        ; <group-by-stat-key; list-accum(add); int-to-string> stat-key => total-count
+        ; prefix-msg := <concat-strings> ["Total ", stat-key, ": "]
+        ; log-info-msg(|<concat-strings> [
+              <align-left>(' ', prefix-msg, <add> (prefix-width, 8))
+              , total-count
+              ])
+    
+    report-subworkunit-total-on-time(|prefix-width) = ?stat-key
+        ; group-by-stat-key; unzip 
+        ; where(Fst; list-accum(add); real-to-string(|2) => user-time)
+        ; where(Snd; list-accum(add); real-to-string(|2) => sys-time)
+        ; prefix-msg := <concat-strings> ["Total ", stat-key, ": "]
+        ; log-info-msg(|<concat-strings> [
+              <align-left>(' ', prefix-msg, <add> (prefix-width, 8)),
+              user-time,
+              "s/",
+              sys-time,
+              "s"
+              ])
+
+          
     report-workunit-stat = ?key
-        ; <log-info(|"Workunit statistics for ")> key
+        ; log-info-msg(|<concat-strings> ["Workunit statistics for ", key]) 
         ; GET-WORKUNIT-STATS
-        ; log-info(|"stats: ")
+        ; where(map(Fst; string-length); list-max; ?prefix-width)
+        ; map(report-subworkunit-stat(|prefix-width))
          
-    // file-workunit-stats = 
-    //     ![
-    //         ("filename", filename),
-    //         ("parse-time", parse-time), 
-    //         ("instrumentation-time",instrumentation-time),
-    //         ("write-time", write-time),
-    //         ("step-event-count", step-event-count)
-    //         ("enter-event-count", enter-event-count)
-    //         ("exit-event-count", exit-event-count)
-    //       ]
+    report-subworkunit-stat(|prefix-width) = ?(stat-key, stat-value)
+        //; <log-info(|" stat-key: ")> stat-key
+        //; <log-info(|" stat-val: ")> stat-value
+        ; if <is-string> stat-value then
+              !stat-value
+          else 
+              <write-to-string> stat-value
+          end
+        ; ?stat-value-string
+        ; prefix-msg := <concat-strings>[ "subworkunit ", stat-key, ": "]
+      ; <concat-strings>[ <align-left>(' ', prefix-msg, <add> (prefix-width, 14))
+                        , stat-value-string
+                        ]
+        ; ?log-line
+        ; log-info-msg(|log-line)
+
+         
+    group-by-stat-key = ?stat-key
+        ; all-keys-GET-WORKUNIT-STATS
+        ; map(GET-WORKUNIT-STATS; !(stat-key, <id>); lookup)
+
