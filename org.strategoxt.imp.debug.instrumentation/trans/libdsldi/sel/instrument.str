@@ -147,6 +147,7 @@ strategies
 		; <SET-TOTAL-WORKUNITS> number-of-files
 		; <SET-WORKUNIT-PROGRESS> 0
 		; result := <map(dsldi-log-timed(instrument-file|"File instrumentation", Notice()))> dsl-program-files
+		; debug
 		; SET-INSTRUMENTATION-SUMMARY
 
 	// current term is the relative location of a DSL program.
@@ -164,15 +165,24 @@ strategies
 		end
 		; ?dsl-program-filename
 		; next-workunit // update progress
+		// start a new dynamic rule scope for this workunit
+		; dr-begin-scope(|"GET-SUBWORKUNIT-STAT")
 		; <log-info(|<separate-by(|" ") ; concat-strings>["Instrumenting", <workunit-progress-as-string>, ": "])> dsl-program-filename
-		; <try-parse-and-instrument> dsl-program-filename // tries to parse, if successfull instrument program
+		  // tries to parse, if successfull instrument program
+		; <try-parse-and-instrument> dsl-program-filename => instrumentation-status
+        ; key := <GET-DSL-PROGRAM-FILENAME> // TODO: ensure that the names are unique
+		; get-all-workunit-stats => workunit-stats
+        ; entry := (key, workunit-stats)
+		; dr-end-scope(|"GET-SUBWORKUNIT-STAT")
+		; <SET-WORKUNIT-STATS> entry
+		; !instrumentation-status
 		  
 	// try to parse the file and then instrument
 	try-parse-and-instrument = 
 		?dsl-program-filename // relative to GET-DSL-PROGRAM-BASEPATH
 		// GET-DSL-PROGRAM-BASEPATH is either relative to the current directory or an absolute path
 		; file := <prefix-with(|<GET-DSL-PROGRAM-BASEPATH>)> dsl-program-filename
-		; (dsl-program-aterm := <get-parsed-dsl-program> file 
+		; (dsl-program-aterm := <profile-subworkunit-stat-duration(get-parsed-dsl-program|"parse-time")> file 
 			<	// parse succes
 				!(dsl-program-filename, dsl-program-aterm)
 				; try-instrument // als returns ("SUCCESS"/"FAIL", dsl-program-filename)
@@ -186,14 +196,14 @@ strategies
 	try-instrument = ?(dsl-program-filename, dsl-program-aterm)
 	   // get-term-origin-location-tuple seems to fail for files that contain concrete syntax...
         ; where(try(!dsl-program-aterm; get-term-origin-location-tuple; SET-TOP-LEVEL-LOCATION))
-		; (instrument-program-aterm 
+		; (profile-subworkunit-stat-duration(instrument-program-aterm|"instrumentation-time") 
 		<	// success
 			(
 				instrumented-aterm := <GET-DSL-PROGRAM-SOURCE>
 				// now write the file
 				; output-filename := <concat-strings> [<GET-OUTPUT-BASEPATH>, "/", dsl-program-filename]
 				; (
-				    <write-dsl-program> (output-filename, instrumented-aterm)
+				    <profile-subworkunit-stat-duration(write-dsl-program|"write-time")> (output-filename, instrumented-aterm)
 				    <
 				    !Success(dsl-program-filename, output-filename)
 				    +
@@ -273,7 +283,6 @@ strategies
 		; (!link; get-gen-transformation <+ err(|"Could not get gen-transformation from link "))
 		; extract-name := <get-extract-transformation> link
 		; generate-name := <get-gen-transformation> link
-		//; debug(!"We are almost going to instrument! ")
 		; (<instrument-specific-aterm(|extract-name, generate-name)> term 
 		  <+ 
 		  	<err-msg(|"Failed to instrument aterm")> ""
@@ -288,6 +297,7 @@ strategies
 		  	  end
 		  )
 		;?generated-term
+		; where(!link; get-event-type-string; ![<id>, "-event-count"]; concat-strings; inc-subworkunit-stat(|<id>))
 		// //; log-trace(|"Succesfully generated term")
 		// // now copy the attachment from the term to the newly instrumented term
 		// // RL: ActionLanguage des copy-attachment

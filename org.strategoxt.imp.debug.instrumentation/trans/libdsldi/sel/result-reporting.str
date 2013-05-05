@@ -13,11 +13,17 @@ signature
 imports
     libdsldi/logging/logging // logging
     libdsldi/utils
+    libdsldi/sel/program-metadata
     
 imports
     libdsldi/sel/options
     libdsldi/sel/dsl-io
-    
+
+imports
+  libstratego-lib
+  libstratego-sglr
+  libstratego-gpp
+      
 strategies
     isSuccess :
         s@Success(_,_) -> s
@@ -132,3 +138,59 @@ strategies
     else
       !current; s
     end
+    
+strategies
+    
+    /**
+     * Measure duration of Strategy s which is part of a workunit.
+     * The duration can be retreived by calling <GET-SUBWORKUNIT-STAT> stat-key 
+     */
+    profile-subworkunit-stat-duration(s|stat-key) = 
+    	?current
+    	; where(times => starttime)
+    	; !current; s
+    	; where(
+    	      <diff-times>(<times>,starttime) => duration
+    	      ; <SET-SUBWORKUNIT-STAT> (stat-key, duration)
+          )
+    
+    /**
+     * Get all subworkunit statistics defined for the current workunit scope.
+     * The subworkunit stats are stored as dynamic rules within the "workunit" dr-scope.
+     * Get them before the dr-scope ends.
+     * List<(stat-key<String>, stat)>
+     */
+    get-all-workunit-stats =
+    	all-keys-GET-SUBWORKUNIT-STAT
+    	; map(\stat-key -> (stat-key, <GET-SUBWORKUNIT-STAT>)\) => stats-list
+    
+    SET-SUBWORKUNIT-STAT = ?(stat-key, stat-value)
+    ; rules(GET-SUBWORKUNIT-STAT: stat-key -> stat-value)
+    
+    SET-WORKUNIT-STATS = ?(workunit-key, stats)
+    ; rules(GET-WORKUNIT-STATS: workunit-key -> stats)
+    
+    inc-subworkunit-stat(|stat-key) = 
+        if <GET-SUBWORKUNIT-STAT> stat-key then
+            <GET-SUBWORKUNIT-STAT> stat-key
+        else
+            !0
+        end
+        ; inc
+        ; <SET-SUBWORKUNIT-STAT> (stat-key, <id>)
+          
+    report-workunit-stat = ?key
+        ; <log-info(|"Workunit statistics for ")> key
+        ; GET-WORKUNIT-STATS
+        ; log-info(|"stats: ")
+         
+    // file-workunit-stats = 
+    //     ![
+    //         ("filename", filename),
+    //         ("parse-time", parse-time), 
+    //         ("instrumentation-time",instrumentation-time),
+    //         ("write-time", write-time),
+    //         ("step-event-count", step-event-count)
+    //         ("enter-event-count", enter-event-count)
+    //         ("exit-event-count", exit-event-count)
+    //       ]

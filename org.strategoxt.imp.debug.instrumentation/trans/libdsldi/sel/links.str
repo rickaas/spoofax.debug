@@ -75,22 +75,22 @@ rules
 	    )
 rules
 	// current term is a Link, returns the event-type
-	// return-type: String
 	get-event-type :
 		Link(event-type, syntax-pattern, gen-transformation, extract-transformation) -> event-type
 	
+	// current term is a Link
+	get-event-type-string =
+	    get-event-type; ?event-type#(_); !event-type
+	
 	// current term is a Link, returns the syntax-pattern
-	// return-type: String
 	get-syntax-pattern :
 		Link(event-type, syntax-pattern, gen-transformation, extract-transformation) -> syntax-pattern
 		
 	// current term is a Link, returns the gen-transformation (the name of the strategy to use in the event generation)
-	// return-type: String
 	get-gen-transformation :
 		Link(event-type, syntax-pattern, StrategyRef(gen-transformation), StrategyRef(extract-transformation)) -> gen-transformation
 	
 	// current term is a Link, returns the extract-transformation (the name of the strategy to use in the metadata-extraction)
-	// return-type: String
 	get-extract-transformation :
 		Link(event-type, syntax-pattern, StrategyRef(gen-transformation), StrategyRef(extract-transformation)) -> extract-transformation
 		
