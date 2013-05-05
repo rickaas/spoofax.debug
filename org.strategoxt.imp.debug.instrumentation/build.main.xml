@@ -2,6 +2,9 @@
 
 <project name="org.strategoxt.imp.debug.instrumentation" default="all">
 
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties" />
+    <!--<taskdef resource="net/sf/antcontrib/antlib.xml"/>-->
+
 	<!-- Key input modules -->
 	<property name="sdfmodule" value="DSLDI"/>
 	<property name="metasdfmodule" value="Stratego-DSLDI"/>
