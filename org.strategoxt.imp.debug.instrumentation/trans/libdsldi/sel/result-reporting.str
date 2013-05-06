@@ -64,7 +64,10 @@ strategies
               ; create-result-report(isSuccess, result-item-to-row-string|<get-report-success-location>)
           end
         //; !("foo.aterm", "contents")
-        ; try(report-all-workunit-stats)
+        ; if get-runtime-statistics-location then
+              get-runtime-statistics-location // TODO: write to file
+          end
+        ; try(report-all-workunit-stats) // TODO: put in above if block
         ; !result
     
     create-result-report(result-filter, result-item-to-row-string|report-location) = ?result

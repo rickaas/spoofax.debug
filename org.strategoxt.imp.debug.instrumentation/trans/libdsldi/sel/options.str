@@ -57,6 +57,10 @@ http://hydra.nixos.org/build/2230584/download/1/manual/chunk-chapter/library-opt
             , <set-config> ("--report-runtime-properties", <id>)
             , !"--report-runtime-properties FILENAME  Write java runtime properties to disk"
         )
+        + ArgOption("--report-runtime-statistics"
+            , <set-config> ("--report-runtime-statistics", <id>)
+            , !"--report-runtime-statistics FILE Write runtime statistics to disk"
+        )
 
 
 	create-dsldi-options =
@@ -91,3 +95,4 @@ http://hydra.nixos.org/build/2230584/download/1/manual/chunk-chapter/library-opt
     get-report-failures-location = <get-config> "--report-failed-files"
     get-report-success-location = <get-config> "--report-succeeded-files"
     get-runtime-report = <get-config> "--report-runtime-properties"
+    get-runtime-statistics-location = <get-config> "--report-runtime-statistics"
