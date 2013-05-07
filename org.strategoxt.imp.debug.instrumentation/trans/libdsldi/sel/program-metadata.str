@@ -10,6 +10,7 @@ These are used to maintain a "state" while instrumenting a DSL source file with 
 imports
 	libdsldi/utils
 	libdsldi/logging/logging
+	libdsldi/sel/options
 	
 strategies
 	/*
@@ -21,7 +22,8 @@ strategies
 		; log-vomit(|"get-dsl-program-files: ")
 		//;<debug(!"get-dsl-program-files ")> dsl-program-basepath
 		//;<debug(!"extension ")> extensions
-		; dsl-program-files := <walk-dir(keep-extensions-filter(|extensions) | dsl-program-basepath)> dsl-program-basepath // location should be relative to the DSL-PROGRAM-BASEPATH
+	    ; get-config-exclude-directories ; ?excluded-directories
+		; dsl-program-files := <walk-dir(exclude-directories-filter(|excluded-directories),keep-extensions-filter(|extensions) | dsl-program-basepath)> dsl-program-basepath // location should be relative to the DSL-PROGRAM-BASEPATH
 
     get-term-origin-location-tuple = ?term;
           (

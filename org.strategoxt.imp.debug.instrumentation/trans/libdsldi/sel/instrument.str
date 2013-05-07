@@ -225,12 +225,15 @@ strategies
 		; dsl-program-aterm' := <prim("SSL_EXT_clone_and_set_parents", dsl-program-aterm)>  // let's see if we now have parents...
 		; <SET-DSL-PROGRAM-FILENAME> dsl-program-filename
 		; <SET-DSL-PROGRAM-SOURCE> dsl-program-aterm'
-		; sel-links := <GET-SEL-DEFINITION; get-sel-links-as-list>
-		; <map(handle-sel-spec)> sel-links // apply each SEL spec definition to the DSL program
-		// DSL-PROGRAM-SOURCE is updated after each handle-sel-spec call
-		  // now do a final sweep
-		; try-post-instrumentation // Will also update DSL-PROGRAM-SOURCE, transformation continues when GET-POST-INSTRUMENTATION-NAME dyn-rule fails
-		; <dbg-msg(|"Finished post-instrumentation")> ""
+		; if get-do-file-instrumentation-config then
+		      id
+			; sel-links := <GET-SEL-DEFINITION; get-sel-links-as-list>
+			; <map(handle-sel-spec)> sel-links // apply each SEL spec definition to the DSL program
+			// DSL-PROGRAM-SOURCE is updated after each handle-sel-spec call
+			  // now do a final sweep
+			; try-post-instrumentation // Will also update DSL-PROGRAM-SOURCE, transformation continues when GET-POST-INSTRUMENTATION-NAME dyn-rule fails
+			; <dbg-msg(|"Finished post-instrumentation")> ""
+		  end
 		; result := <GET-DSL-PROGRAM-SOURCE>
 		// output instrumented AST
 		; log-vomit(|"INSTRUMENTED: ")
@@ -283,19 +286,25 @@ strategies
 		; (!link; get-gen-transformation <+ err(|"Could not get gen-transformation from link "))
 		; extract-name := <get-extract-transformation> link
 		; generate-name := <get-gen-transformation> link
-		; (<instrument-specific-aterm(|extract-name, generate-name)> term 
-		  <+ 
-		  	<err-msg(|"Failed to instrument aterm")> ""
-		  	; <err(|"... Extract transformation:")> extract-name
-		  	; <err(|"... Generate transformation:")> generate-name
-		  	; <log-debug-depth(err(|"... at term:"))> term
-		  	; <log-vomit(|"... more details:")> term
-		  	; if get-config-allow-no-instrumentation-failures then
-	  	        fail
-	  	      else
-		  	    !term // recover from instrumentation error
-		  	  end
-		  )
+		; if get-instrument-term-config then
+		      id
+			; (<instrument-specific-aterm(|extract-name, generate-name)> term 
+			  <+ 
+			  	<err-msg(|"Failed to instrument aterm")> ""
+			  	; <err(|"... Extract transformation:")> extract-name
+			  	; <err(|"... Generate transformation:")> generate-name
+			  	; <log-debug-depth(err(|"... at term:"))> term
+			  	; <log-vomit(|"... more details:")> term
+			  	; if get-config-allow-no-instrumentation-failures then
+		  	        fail
+		  	      else
+			  	    !term // recover from instrumentation error
+			  	  end
+			  )
+		  else
+		      // do not instrument term but still count the event
+		      !term
+		  end
 		;?generated-term
 		; where(!link; get-event-type-string; ![<id>, "-event-count"]; concat-strings; inc-subworkunit-stat(|<id>))
 		// //; log-trace(|"Succesfully generated term")
@@ -349,18 +358,20 @@ strategies
 	// do a final sweep
     try-post-instrumentation =
         aterm := <GET-DSL-PROGRAM-SOURCE>
-        ; <dbg-msg(|"Trying to do post-instrumentation... ")> ""
-        ; if not(GET-POST-INSTRUMENTATION-NAME) then
-              // no post instrumentation defined
-              <dbg-msg(|"No post-instrumentation defined")> ""
-          else
-              // post instrumentation defined
-              post-instrumentation-name := <GET-POST-INSTRUMENTATION-NAME>
-              ; <dbg(|"Post-instrumentation using: ")> post-instrumentation-name
-              //; post-ast := <java-invoke-strategy(|post-instrumentation-name)> aterm
-              ; post-ast := <java-call-post-instrumentation-strategy(|post-instrumentation-name)> aterm
-              ; <SET-DSL-PROGRAM-SOURCE> post-ast
-              <+ (<err-msg(|"Post-instrumentation failed")> ""; fail)
+        ; if get-do-post-instrumentation-config then
+	        <dbg-msg(|"Trying to do post-instrumentation... ")> ""
+	        ; if not(GET-POST-INSTRUMENTATION-NAME) then
+	              // no post instrumentation defined
+	              <dbg-msg(|"No post-instrumentation defined")> ""
+	          else
+	              // post instrumentation defined
+	              post-instrumentation-name := <GET-POST-INSTRUMENTATION-NAME>
+	              ; <dbg(|"Post-instrumentation using: ")> post-instrumentation-name
+	              //; post-ast := <java-invoke-strategy(|post-instrumentation-name)> aterm
+	              ; post-ast := <java-call-post-instrumentation-strategy(|post-instrumentation-name)> aterm
+	              ; <SET-DSL-PROGRAM-SOURCE> post-ast
+	              <+ (<err-msg(|"Post-instrumentation failed")> ""; fail)
+	          end
           end
 
     before-instrument = ?ast

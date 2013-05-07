@@ -41,6 +41,10 @@ http://hydra.nixos.org/build/2230584/download/1/manual/chunk-chapter/library-opt
             , where(<extend-config> ("--file-extension", [<id>]))
             , !"--file-extension extension   Instrument these files"
         )
+        + ArgOption("--exclude-dir"
+            , where(<extend-config> ("--exclude-dir", [<id>]))
+            , !"--exclude-dir DIRECTORY      instrumented files that are in this directory (or a subdirectory) will be excluded"
+        )
         + Option("--allow-no-instrumentation-failures"
             , <set-config> ("--allow-no-instrumentation-failures", "on")
             , !"--allow-no-instrumentation-failures"
@@ -81,6 +85,9 @@ http://hydra.nixos.org/build/2230584/download/1/manual/chunk-chapter/library-opt
 	get-config-file-extension =
     <get-config> "--file-extension" <+ ![]
     
+    get-config-exclude-directories =
+        <get-config; debug(!"Excluded")> "--exclude-dir" <+ ![]
+    
     get-config-is-fake-run = <get-config> "--fake-run"
     
     // Only instrument a single file
@@ -96,3 +103,12 @@ http://hydra.nixos.org/build/2230584/download/1/manual/chunk-chapter/library-opt
     get-report-success-location = <get-config> "--report-succeeded-files"
     get-runtime-report = <get-config> "--report-runtime-properties"
     get-runtime-statistics-location = <get-config> "--report-runtime-statistics"
+    
+    // when fails, file instrumentation will be skipped, but file will still be parsed and pretty-printed
+    get-do-file-instrumentation-config = id
+    
+    // when fails, terms matched to a SEL def will not be instrumented but the events are counted
+    get-instrument-term-config = id
+    
+    // when fails, post-instrumentation will always be skipped (Could result in un-pretty-printable files)
+    get-do-post-instrumentation-config = id
