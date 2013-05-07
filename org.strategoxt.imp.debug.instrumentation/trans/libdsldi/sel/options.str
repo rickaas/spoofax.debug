@@ -65,8 +65,21 @@ http://hydra.nixos.org/build/2230584/download/1/manual/chunk-chapter/library-opt
             , <set-config> ("--report-runtime-statistics", <id>)
             , !"--report-runtime-statistics FILE Write runtime statistics to disk"
         )
-
-
+        + Option("--skip-file-instrumentation"
+            , <set-config> ("--skip-file-instrumentation", "on")
+            , !"--skip-file-instrumentation"
+        )
+        + Option("--skip-term-instrumentation"
+            , <set-config> ("--skip-term-instrumentation", "on")
+            , !"--skip-term-instrumentation"
+        )
+        + Option("--skip-post-instrumentation"
+            , <set-config> ("--skip-post-instrumentation", "on")
+            , !"--skip-post-instrumentation"
+        )
+        
+        
+        
 	create-dsldi-options =
 	    create-dsldi-io-options
 	    + create-dsldi-optional-options
@@ -105,10 +118,10 @@ http://hydra.nixos.org/build/2230584/download/1/manual/chunk-chapter/library-opt
     get-runtime-statistics-location = <get-config> "--report-runtime-statistics"
     
     // when fails, file instrumentation will be skipped, but file will still be parsed and pretty-printed
-    get-do-file-instrumentation-config = id
+    get-do-file-instrumentation-config = not(!"--skip-file-instrumentation"; get-config)
     
     // when fails, terms matched to a SEL def will not be instrumented but the events are counted
-    get-instrument-term-config = id
+    get-instrument-term-config = not(!"--skip-term-instrumentation"; get-config)
     
     // when fails, post-instrumentation will always be skipped (Could result in un-pretty-printable files)
-    get-do-post-instrumentation-config = id
+    get-do-post-instrumentation-config = not(!"--skip-post-instrumentation"; get-config)
