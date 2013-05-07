@@ -25,26 +25,37 @@ strategies
 	// fails if the current path does not have the ".str"-extension or when it is a directory
 	is-dsl-file(|ext) = has-extension(|ext); file-exists; filemode; not(isdir)
 	
+	walk-dir(file-filter | root-directory) =
+	    walk-dir(id, file-filter | root-directory)
+	
 	// returns a list of paths, for which the strategy s holds.
 	// Strategy s should make the distinction between files and directories if needed,
 	// as s is applied to all elements in a directory (the elements returned by <readdir>).
 	// When s is called the current term is a complete path.
 	//
 	// current term should be a String pointing to a directory name
-	walk-dir(file-filter | root-directory) = 
+	walk-dir(directory-filter, file-filter | root-directory) = 
 		?base-dir
 		; log-vomit(|"Walking directory: ")
-		; readdir //
-		; log-vomit(|"Directory contents: ")
-		// prefix the file name with the base-dir otherwise we cannot determine if some locations are directories
-		; fullpaths* := <map(prefix-with(|base-dir))> 
-		// after keeping the files that match the filter we remove the DSL-PROGRAM-BASEPATH prefix to keep the matches files relative
-		// Note that base-dir does not have to correspond to DSL-PROGRAM-BASEPATH
-		; matched-files* := <filter(file-filter); flatten-list; map(split-path(|root-directory); Snd)>
-		; log-vomit(|"Matched files: ")
-		; dirs-only* := <filter-dirs> fullpaths* // keep directories
-		; matched-in-subdirs* := <map(walk-dir(file-filter|root-directory)) ; flatten-list> dirs-only*
-		; <flatten-list> [matched-in-subdirs*, matched-files*]
+		; rel-base-dir := <split-path(|root-directory); Snd> base-dir
+		; log-vomit(|"Walking directory (relative to basepath): ")
+		// check if rel-base-dir is an excluded directory
+		; if <directory-filter> rel-base-dir then
+			<readdir> base-dir
+			; log-vomit(|"Directory contents: ")
+			// prefix the file name with the base-dir otherwise we cannot determine if some locations are directories
+			; fullpaths* := <map(prefix-with(|base-dir))> 
+			// after keeping the files that match the filter we remove the DSL-PROGRAM-BASEPATH prefix to keep the matches files relative
+			// Note that base-dir does not have to correspond to DSL-PROGRAM-BASEPATH
+			; matched-files* := <filter(file-filter); flatten-list; map(split-path(|root-directory); Snd)>
+			; log-vomit(|"Matched files: ")
+			; dirs-only* := <filter-dirs> fullpaths* // keep directories
+			; matched-in-subdirs* := <map(walk-dir(directory-filter, file-filter|root-directory)) ; flatten-list> dirs-only*
+			; <flatten-list> [matched-in-subdirs*, matched-files*]
+		else
+		    <log-vomit(|"Excluded directory: ")> rel-base-dir
+		    ; ![]
+		end
 		// walk over the directories
 	
 	// prefix the current file name with a path prefix
@@ -60,6 +71,18 @@ strategies
 		 dirs* := <filter(file-exists ; filemode ; isdir)> paths*
 		 //< list-dirs-in-dir + ![]
 	
+	exclude-directories-filter(|directories) :
+	    directory -> keeps
+	    where
+	        <is-list> directories
+	        ; keeps := <debug(!"DIRS"); filter(is-prefix-of(|directory))> directories
+	        ; debug(!"No match: ")
+	        ; ?[]
+	
+	is-prefix-of(|value) = ?prefix
+	   ;!value
+	   ; string-starts-with(|prefix)
+	
 	keep-extensions-filter(|extensions) :
 	    filename -> keeps
 	    where
@@ -71,27 +94,7 @@ strategies
         where
             <is-string> extension
             ; keeps := <filter(!(<id>, filename); check-ext)> [ extension ]
-	/*
-	Current term is a filename.
-	Returns the [filename] when the filename has one of the given extension.
-	Else return [].
-	*/
-	// keep-extensions-filter(|extensions) =
-	// 	?filename
-	// 	; if <is-list> extensions then 
-	// 	  // current term is a list
-	// 	  	debug(!"is-list") ;
-	// 	  	!extensions 
-	// 	  else 
-	// 	  	debug(!"not-list") ;
-	// 	  	if <is-string> extensions then
-	// 	  		debug(!"is-string")
-	// 	  	else
-	// 	  	    !extensions
-	// 	  	    log-warn(|"Cannot apply extension filtering on ")
-	// 	  	    end
-	// 	  end
-	// 	; keeps := <filter(!(<id>, filename); check-ext)> extensions
+
 
 	/*
 	Current term is (extension, filename).
