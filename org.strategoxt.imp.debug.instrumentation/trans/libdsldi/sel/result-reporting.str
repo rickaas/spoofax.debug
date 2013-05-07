@@ -185,8 +185,9 @@ strategies
         ; inc
         ; <SET-SUBWORKUNIT-STAT> (stat-key, <id>)
           
-    report-all-workunit-stats = 
-        all-keys-GET-WORKUNIT-STATS
+    report-all-workunit-stats =
+        log-info-msg(|"report-all-workunit-stats...") 
+        ; all-keys-GET-WORKUNIT-STATS
         ; map(report-workunit-stat)
         ; !["Enter-event-count", "Exit-event-count", "Step-event-count"] => event-counters
         ; !["parse-time", "instrumentation-time", "write-time", "file-total-time"] => timings
@@ -197,6 +198,7 @@ strategies
 
     // Values for stat-key should be integers
     report-subworkunit-total-on-count(|prefix-width) = ?stat-key
+        ; log-info(|"reporting statistics for ")
         ; <group-by-stat-key; list-accum(add); int-to-string> stat-key => total-count
         ; prefix-msg := <concat-strings> ["Total ", stat-key, ": "]
         ; log-info-msg(|<concat-strings> [
@@ -240,8 +242,8 @@ strategies
         ; ?log-line
         ; log-info-msg(|log-line)
 
-         
+    // returns List<Tuple<Real, Real>>
     group-by-stat-key = ?stat-key
         ; all-keys-GET-WORKUNIT-STATS
-        ; map(GET-WORKUNIT-STATS; !(stat-key, <id>); lookup)
+        ; map(GET-WORKUNIT-STATS; !(stat-key, <id>); lookup <+ !None()); remove-all(?None())
 
