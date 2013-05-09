@@ -65,11 +65,57 @@ strategies
           end
         //; !("foo.aterm", "contents")
         ; if get-runtime-statistics-location then
-              get-runtime-statistics-location // TODO: write to file
+              try(make-file-based-stats)
+              ; try(make-grouped-stats)
           end
-        ; try(report-all-workunit-stats) // TODO: put in above if block
+        ; if get-config-show-runtime-stats then
+              report-all-workunit-stats
+          end
         ; !result
-    
+          
+    make-file-based-stats = 
+      filename := <get-runtime-statistics-location>
+      ; file-stats-location := <concat-strings> [filename, ".file.stats"]
+      ; log-info(|"Writing file-based runtime stats to ")
+      ; handle := <fopen> (file-stats-location, "w")
+      ; finally(id
+            // write header
+            ; get-all-stat-value-keys
+            ; <concat> [["filename"], <id>]
+            ; separate-by(|"\t")
+            ; concat-strings
+            ; <fputs> (<id>, handle)
+            ; <fputs> ("\n", handle)
+            // write contents
+            ; visit-all-workunit-stats(\row -> row where <fputs> (row, handle); <fputs> ("\n", handle) \)
+            , <fclose> handle
+        )
+        
+    make-grouped-stats = 
+      filename := <get-runtime-statistics-location>
+      ; group-stats-location := <concat-strings> [filename, ".group.stats"]
+      ; log-info(|"Writing grouped runtime stats to ")
+      ; handle := <fopen> (group-stats-location, "w")
+      ; finally(id
+            ; get-all-stat-value-keys
+            ; map(
+                  \stat-value-key -> stat-value-key
+                    where
+                        group-by-stat-key
+                        ; try(
+	                        (list-accum(add) <+ !0)
+	                        ; write-to-string
+	                        ; ![stat-value-key, <id>]
+	                        ; separate-by(|"\t")
+	                        ; concat-strings
+	                        ; <fputs> (<id>, handle)
+	                        ; <fputs> ("\n", handle)
+                        )
+                  \
+              )
+            , <fclose> handle
+        )
+        
     create-result-report(result-filter, result-item-to-row-string|report-location) = ?result
         ;filter(result-filter)
         ;map(result-item-to-row-string)
@@ -126,19 +172,19 @@ strategies
     ?current
     ; level := <verbose-level> severity
     ; if <geq>(<get-config> "--statistics", level) then
-      where(times => starttime)
-    ; !current; s
-    ; where(
-        <diff-times>(<times>,starttime)
-      ; <concat-strings>[ <align-left>(' ', msg, 27)
+        where(times => starttime)
+        ; !current; s
+        ; where(
+            <diff-times>(<times>,starttime)
+            ; <concat-strings>[ <align-left>(' ', msg, 27)
                         , " : [user/system] = ["
                         , <self-children-user-time; ticks-to-seconds ; real-to-string(|2)>
                         , "s/"
                         , <self-children-sys-time; ticks-to-seconds ; real-to-string(|2)>
                         , "s]"
                         ]
-      ; log(|Info(),<id>)
-      )
+            ; log(|Info(),<id>)
+        )
     else
       !current; s
     end
@@ -157,7 +203,8 @@ strategies
     	      <diff-times>(<times>,starttime) => duration
     	      ; <self-children-user-time; ticks-to-seconds /*; real-to-string(|2)*/> duration => user-time
     	      ; <self-children-sys-time; ticks-to-seconds /*; real-to-string(|2)*/> duration => sys-time
-    	      ; <SET-SUBWORKUNIT-STAT> (stat-key, (user-time, sys-time))
+    	      //; <SET-SUBWORKUNIT-STAT> (stat-key, (user-time, sys-time)) // record user and sys time
+    	      ; <SET-SUBWORKUNIT-STAT> (stat-key, user-time) // record user time
           )
     
     /**
@@ -184,6 +231,33 @@ strategies
         end
         ; inc
         ; <SET-SUBWORKUNIT-STAT> (stat-key, <id>)
+    
+    // print line per workunit (i.e. instrumented file)
+    visit-all-workunit-stats(write-row) = id
+        ; all-keys-GET-WORKUNIT-STATS
+        ; map(workunit-stat-to-row-string(get-all-stat-value-keys); write-row)
+    
+    get-all-stat-value-keys = id
+        ; !["Enter-event-count", "Exit-event-count", "Step-event-count"] => event-counters
+        ; !["parse-time", "instrumentation-time", "write-time", "file-total-time"] => timings
+        ; <concat> [event-counters, timings]
+    
+    // write filename, enter/exit/step-count, total-duration, parse-duration, instr-duration, write-duration
+    workunit-stat-to-row-string(get-stat-value-keys) = ?filename-key
+        ; get-stat-value-keys // List<String>
+        ; map(!(<id>, <!filename-key; GET-WORKUNIT-STATS>); lookup <+ !0) // if stat-value-key is not found return 0 as default value
+        ; map(write-to-string)
+        ; <concat> [[filename-key], <id>]
+        ; separate-by(|"\t")
+        ; concat-strings
+          
+    subworkunit-stat-value-to-string = 
+        ?(stat-key, stat-value)
+        ; if <is-string> stat-value then
+              !stat-value
+          else 
+              <write-to-string> stat-value
+          end
           
     report-all-workunit-stats =
         log-info-msg(|"report-all-workunit-stats...") 
@@ -191,15 +265,19 @@ strategies
         ; map(report-workunit-stat)
         ; !["Enter-event-count", "Exit-event-count", "Step-event-count"] => event-counters
         ; !["parse-time", "instrumentation-time", "write-time", "file-total-time"] => timings
-        ; event-counters-prefix-width := <map(string-length); list-max> event-counters
-        ; timings-prefix-width := <map(string-length); list-max> timings
-        ; <map(report-subworkunit-total-on-count(|event-counters-prefix-width))> event-counters 
-        ; <map(report-subworkunit-total-on-time(|timings-prefix-width))> timings
+        ; stat-value-keys := <concat> [event-counters, timings]
+        ; prefix-width := <map(string-length); list-max> stat-value-keys
+        ; <map(try(report-subworkunit-total-on-count(|prefix-width)))> stat-value-keys
+        // difference between counter and time => count contains a integer and time contains a tuple of doubles
+        //; event-counters-prefix-width := <map(string-length); list-max> event-counters
+        //; timings-prefix-width := <map(string-length); list-max> timings
+        //; <map(try(report-subworkunit-total-on-count(|event-counters-prefix-width)))> event-counters 
+        //; <map(try(report-subworkunit-total-on-time(|timings-prefix-width)))> timings
 
     // Values for stat-key should be integers
     report-subworkunit-total-on-count(|prefix-width) = ?stat-key
         ; log-info(|"reporting statistics for ")
-        ; <group-by-stat-key; list-accum(add); int-to-string> stat-key => total-count
+        ; <group-by-stat-key; list-accum(add); write-to-string> stat-key => total-count
         ; prefix-msg := <concat-strings> ["Total ", stat-key, ": "]
         ; log-info-msg(|<concat-strings> [
               <align-left>(' ', prefix-msg, <add> (prefix-width, 8))
