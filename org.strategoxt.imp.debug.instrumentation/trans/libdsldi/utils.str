@@ -71,13 +71,16 @@ strategies
 		 dirs* := <filter(file-exists ; filemode ; isdir)> paths*
 		 //< list-dirs-in-dir + ![]
 	
+	// directory is the directory that is traversed
+	// directories are the excluded directories
+	// rule succeeds if the directory does not match any of the excluded directories
 	exclude-directories-filter(|directories) :
 	    directory -> keeps
 	    where
 	        <is-list> directories
-	        ; keeps := <debug(!"DIRS"); filter(is-prefix-of(|directory))> directories
-	        ; debug(!"No match: ")
-	        ; ?[]
+	        ; keeps := <filter(is-prefix-of(|directory))> directories
+	        // list contains all excluded-directories patterns that match the current directory
+	        ; ?[] // when it is empty the directory did not match any exclude patterns
 	
 	is-prefix-of(|value) = ?prefix
 	   ;!value
