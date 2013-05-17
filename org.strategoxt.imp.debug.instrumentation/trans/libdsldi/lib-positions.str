@@ -24,3 +24,27 @@ strategies
       else
         position := <lib-position-of-term(is-term | <inc> start-index)> t*
       end
+
+  lib-at-position(s|position):
+    c#(t*) -> t'
+    where
+      !position => [i | position']
+    where
+      t' := c#(<at-index(lib-at-position(s|position'))> (i, t*))
+
+  lib-at-position(s|position):
+    t -> t'
+    where
+      !position => [];
+      t' := <s> t
+
+  lib-term-at-position(|position):
+    t -> t'
+    where
+      lib-at-position(?t'|position) 
+      
+      
+  lib-parent-position = ?p*
+    ; length
+    ; dec => size
+    ; <take(|size)> p*
