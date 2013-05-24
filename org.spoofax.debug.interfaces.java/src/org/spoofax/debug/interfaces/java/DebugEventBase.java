@@ -39,4 +39,8 @@ public abstract class DebugEventBase implements ISuspendInClassEntry {
 		FrameVarScope scope = GlobalVarEnvironmentScope.get().getFrameScope(threadName, frameIndex);
 		return scope.getValue(varName);
 	}
+	
+	public void setEventInfo(String eventInfo) {
+		this.eventInfo = eventInfo;
+	}
 }
