@@ -196,6 +196,7 @@ strategies
 	try-instrument = ?(dsl-program-filename, dsl-program-aterm)
 	   // get-term-origin-location-tuple seems to fail for files that contain concrete syntax...
         ; where(try(!dsl-program-aterm; get-term-origin-location-tuple; SET-TOP-LEVEL-LOCATION))
+        ; where(<SET-SUBWORKUNIT-STAT> ("program-term-size", <term-size> dsl-program-aterm))
 		; (profile-subworkunit-stat-duration(instrument-program-aterm|"instrumentation-time") 
 		<	// success
 			(

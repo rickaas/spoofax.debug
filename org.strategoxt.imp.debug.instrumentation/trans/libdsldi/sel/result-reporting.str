@@ -239,8 +239,9 @@ strategies
     
     get-all-stat-value-keys = id
         ; !["Enter-event-count", "Exit-event-count", "Step-event-count"] => event-counters
+        ; !["program-term-size"] => size-counters
         ; !["parse-time", "instrumentation-time", "write-time", "file-total-time"] => timings
-        ; <concat> [event-counters, timings]
+        ; <concat> [event-counters, size-counters, timings]
     
     // write filename, enter/exit/step-count, total-duration, parse-duration, instr-duration, write-duration
     workunit-stat-to-row-string(get-stat-value-keys) = ?filename-key
@@ -263,9 +264,7 @@ strategies
         log-info-msg(|"report-all-workunit-stats...") 
         ; all-keys-GET-WORKUNIT-STATS
         ; map(report-workunit-stat)
-        ; !["Enter-event-count", "Exit-event-count", "Step-event-count"] => event-counters
-        ; !["parse-time", "instrumentation-time", "write-time", "file-total-time"] => timings
-        ; stat-value-keys := <concat> [event-counters, timings]
+        ; stat-value-keys := <get-all-stat-value-keys>
         ; prefix-width := <map(string-length); list-max> stat-value-keys
         ; <map(try(report-subworkunit-total-on-count(|prefix-width)))> stat-value-keys
         // difference between counter and time => count contains a integer and time contains a tuple of doubles
