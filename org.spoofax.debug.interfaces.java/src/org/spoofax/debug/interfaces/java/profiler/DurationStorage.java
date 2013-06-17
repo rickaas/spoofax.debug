@@ -16,7 +16,7 @@ import java.util.Map;
  */
 public class DurationStorage {
 	
-	public static final int BUFFER_SIZE = 100;
+	public static final int BUFFER_SIZE = 1024;
 	
 	/**
 	 * For each event type we have an array that contains the start time of the event.
@@ -84,7 +84,8 @@ public class DurationStorage {
 	 * @param type
 	 */
 	public void start(String type) {
-		getStart(type)[getCounter(type)] = System.currentTimeMillis();
+		getStart(type)[getCounter(type)] = System.nanoTime();
+		//getStart(type)[getCounter(type)] = System.currentTimeMillis();
 	}
 	
 	/**
@@ -92,7 +93,8 @@ public class DurationStorage {
 	 * @param type
 	 */
 	public void stop(String type) {
-		getStop(type)[getCounter(type)] = System.currentTimeMillis();
+		getStop(type)[getCounter(type)] = System.nanoTime();
+		//getStop(type)[getCounter(type)] = System.currentTimeMillis();
 		try {
 			next(type);
 		} catch (IOException e) {
